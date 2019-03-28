@@ -1,0 +1,14 @@
+---
+title: "Critique on Past Projects"
+author: "Ruoqi Zhang"
+date: "3/27/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Critique 1: [US-China Trade](https://michael-montella.shinyapps.io/us-china-trade/)
+
+# Critique 2: [Porn Consumption during Ramadan](http://rpubs.com/hahe211/446172)
