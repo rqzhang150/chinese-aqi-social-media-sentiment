@@ -11,4 +11,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Critique 1: [US-China Trade](https://michael-montella.shinyapps.io/us-china-trade/)
 
+I choose to critique this project because it fits my personal interest. 
+
+1. **Data source should be better cited**: The author of the project cited the source of the data as World Trade Organization in the "Mission" page. However, this is rather unclear and cannot provide other people the opportunity to reproduce this project through the same data source. Furthermore, the author falls short in justifying and explaining the statistics selected for exploratory analysis: How do we differentiate goods and services? How important they are? What do their variations tell us? What is the timespan covered by the dataset, and why do we choose this timespan?
+
+2. **Details in graphs**: When presenting the service exchange between US and China, the author makes a drop-down list for users to interact with the graph, allowing users to select what type of services that they want to explore. However, for each kind of service selected, the graph would provide a different y-scale, which can create confusion and prevent users from gaining a more accurate intuition of the volume of services exchange between China and the United States across time. The year labels in the x-axis also overlaps, which can be addressed by tilting x labels or expanding the width of the graph. The labels for y-axis is also not formatted properly. Adding grid in in the line plot would also allow users to gain a rough sense of the volue of service exchanges better.
+
+3. **Turn the overview timeline into a graph**: The author contextualizes this analysis well, with an overview of escalating trade tensions between China and the United States. While the trade tension cannot be easily quantified, the author can consider making an infographic of the timeline provided in the overview page, which can make the information more accessible.
+
 # Critique 2: [Porn Consumption during Ramadan](http://rpubs.com/hahe211/446172)
+
+1. The author of this analysis did an excellent job of explaining the source of the project's data, the reasoning behind the data processing, the rationale for conducting this research. The author also cited scholarly articles to provide background for the project's analysis, and makes extensive statistical arguments to bolster the project's claim.
+
+2. The graph "\'Porn\' and \'Sex\' Search Values over the Past 4 Years" did an excellent job of visualizing the hit values for keywords relevant to pornography consumption in the past four years. The grey vertical strips that mark the period of Ramadan is of great assistance of interpreting the pattern in the graph. However, the width of the graph may be too small, and might lead users to ignore some variances across year. For example, the pattern during 2015's Ramadan, which did not see significant decrease in search values, is not explained. Regardless, the author's statistical analysis allowed the project's to stand regardless.
+
+3. While this project present a convincing argument about the frequency of pornography consumption during Ramadan, it did not provide users with chances to interact with the data. For example, author can utilize the Google Trends API, with pre-set keywords to allow users to explore the patterns for other keywords.
