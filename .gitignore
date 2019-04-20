@@ -8,5 +8,12 @@
 .DS_Store
 
 *cache/
+*files/
 
 README.html
+
+*.zip
+
+# Sparklyr log directory and files
+logs/
+derby.log
