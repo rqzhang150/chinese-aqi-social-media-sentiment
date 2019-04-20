@@ -14,6 +14,7 @@
 *files/
 
 README.html
+datasets/weiboscope_data/*.csv
 
 *.zip
 

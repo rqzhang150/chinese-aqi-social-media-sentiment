@@ -99,10 +99,6 @@ creation_time_dist <- WEIBOSCOPE_ALL %>%
 toc()
 
 write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
-
-ggplot(data = num_created_date, aes(x = created_date, y = post_created)) +
-  geom_line()
-
 ```
 
 

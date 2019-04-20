@@ -9,21 +9,42 @@
 
 library(shiny)
 library(tidyverse)
+library(markdown)
+library(lubridate)
+library(shinythemes)
+library(markdown)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
+  theme = shinytheme("paper"),
   
-  # Application title
-  titlePanel("Time Distribution"),
-  
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel(
+  navbarPage(
+    title = "Air Quality & Social Media Sentiment",
+    tabPanel(
+      title = "About",
+      fluidRow(
+        includeMarkdown("about.md")
+      )
+    ),
+    tabPanel(
+      title = "Environment and Political Legitimacy",
+      sidebarLayout(
+        sidebarPanel(
+        ),
+        
+        # Show a plot of the generated distribution
+        mainPanel(
+          plotOutput("creationTimePlot")
+        )
+      )
     ),
     
-    # Show a plot of the generated distribution
-    mainPanel(
-       plotOutput("creationTimePlot")
+    tabPanel(
+      title = "Censorship"
+    ),
+    
+    tabPanel(
+      title = "Acknowledgement"
     )
   )
 ))
