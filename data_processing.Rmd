@@ -1,0 +1,137 @@
+---
+title: "Data Processing"
+author: "Ruoqi Zhang"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, cache=TRUE)
+library(sf)
+library(tidyverse)
+library(gt)
+library(sparklyr)
+library(tictoc)
+library(lubridate)
+```
+
+```{r sparklyr_setup}
+
+# Set environment variable for JDK 1.8 in order to point sparklyr package to the
+# correct directory.
+
+Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home")
+
+# Configuring Sparklyr settings.
+
+conf <- list()
+
+# Assign 4 CPU cores, 10G memory to process the data.
+
+conf$`sparklyr.cores.local` <- 4
+conf$`sparklyr.shell.driver-memory` <- "10G"
+conf$spark.memory.fraction <- 0.9
+
+# Connect to local Spark instance.
+
+sc <- spark_connect(master = "local",
+                    config = conf)
+
+```
+
+
+# Time Distribution in Week 1
+
+```{r data_proc}
+tic("sparkload")
+DATA_ALL <- spark_read_csv(sc,
+  name = "weiboscope", 
+  path = "datasets/weiboscope_data/*.csv",
+  infer_schema = FALSE,
+  columns = list(
+    mid = "character",
+    retweeted_status_mid = "character",
+    uid = "character",
+    retweeted_uid = "character",
+    source = "character",
+    image = "integer",
+    text = "character",
+    geo = "character",
+    created_at = "timestamp",
+    deleted_last_seen = "character",
+    permission_denied = "character"
+  )
+)
+toc()
+
+# tic("csvload")
+# week1_csv <- read_csv("datasets/weiboscope_data/week1.csv",
+#          col_types = cols(mid = col_character(),
+#                                    retweeted_status_mid = col_character(),
+#                                    uid = col_character(),
+#                                    retweeted_uid = col_character(),
+#                                    source = col_character(),
+#                                    image = col_logical(),
+#                                    text = col_character(),
+#                                    geo = col_character(),
+#                                    created_at = col_datetime(format = ""),
+#                                    deleted_last_seen = col_character(),
+#                                    permission_denied = col_character()))
+# toc()
+
+```
+
+```{r time_distribution_rds}
+
+tic("num_created_date")
+num_created_date <- DATA_ALL %>% 
+  mutate(created_date = to_date(created_at)) %>% 
+  group_by(created_date) %>% 
+  summarize(post_created = n()) %>% 
+  collect()
+toc()
+
+num_created_date
+
+ggplot(data = num_created_date, aes(x = created_date, y = post_created)) +
+  geom_line()
+
+week1 %>% 
+  ggplot(aes(x = created_at)) +
+    geom_freqpoly(binwidth = 600)
+
+week1 %>% 
+  mutate(created_at = ymd_hms(created_at))
+
+week1 %>% 
+  mutate(week_day = day(created_at))
+
+week1 %>% 
+  
+
+tic("week1_spark_graph")
+week1 %>% 
+  ggplot(aes(x = created_at)) +
+    geom_freqpoly(binwidth = 600) +
+    theme_minimal() +
+    labs(x = NULL,
+         y = "Number of Posts Per Minute",
+         title = paste("Variations In Number of Weibo Posts Across A Week"),
+         subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
+         caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
+toc()
+
+
+tic("week1_graph")
+week1_csv %>% 
+  ggplot(aes(x = created_at)) +
+    geom_freqpoly(binwidth = 600) +
+    theme_minimal() +
+    labs(x = NULL,
+         y = "Number of Posts Per Minute",
+         title = paste("Variations In Number of Weibo Posts Across A Week"),
+         subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
+         caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
+toc()
+
+```
+
