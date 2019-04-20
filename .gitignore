@@ -7,6 +7,9 @@
 
 .DS_Store
 
+# User directories
+
+*rsconnect/
 *cache/
 *files/
 

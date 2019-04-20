@@ -1,11 +1,13 @@
 ---
 title: "Data Processing"
 author: "Ruoqi Zhang"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning=FALSE, cache=TRUE)
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(cache=TRUE)
 library(sf)
 library(tidyverse)
 library(gt)
@@ -14,7 +16,7 @@ library(tictoc)
 library(lubridate)
 ```
 
-```{r sparklyr_setup}
+```{r sparklyr_setup, include=TRUE}
 
 # Set environment variable for JDK 1.8 in order to point sparklyr package to the
 # correct directory.
@@ -42,10 +44,31 @@ sc <- spark_connect(master = "local",
 # Time Distribution in Week 1
 
 ```{r data_proc}
+
+# Time the loading time for the csv files.
+
 tic("sparkload")
-DATA_ALL <- spark_read_csv(sc,
+
+# Read all WeiboScope csv files to WEIBOSCOPE_ALL variable through spark. The
+# reason that we use Spark is that the files are too big to be stored in memory.
+# Thus, we need a distributional computation platfrom to properly produce
+# analysis on tis dataset. We process the dataset using spark, and generate
+# dataframes that contains manageable metadata, and visualize it using ggplot.
+
+WEIBOSCOPE_ALL <- spark_read_csv(sc,
   name = "weiboscope", 
+  
+  # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
+  # Using wildcard, we read in all the data in that directory. Because
+  # Weiboscope data already contains timestamp of the posts, we do not worry
+  # about the filename.
+  
   path = "datasets/weiboscope_data/*.csv",
+  
+  # Specifying the column types manually without letting Spark infering the
+  # column types. The following column types are not specified under R coltypes,
+  # but instead uses Spark SQL format.
+  
   infer_schema = FALSE,
   columns = list(
     mid = "character",
@@ -57,43 +80,36 @@ DATA_ALL <- spark_read_csv(sc,
     text = "character",
     geo = "character",
     created_at = "timestamp",
-    deleted_last_seen = "character",
-    permission_denied = "character"
+    deleted_last_seen = "timestamp",
+    permission_denied = "timestamp"
   )
 )
 toc()
 
-# tic("csvload")
-# week1_csv <- read_csv("datasets/weiboscope_data/week1.csv",
-#          col_types = cols(mid = col_character(),
-#                                    retweeted_status_mid = col_character(),
-#                                    uid = col_character(),
-#                                    retweeted_uid = col_character(),
-#                                    source = col_character(),
-#                                    image = col_logical(),
-#                                    text = col_character(),
-#                                    geo = col_character(),
-#                                    created_at = col_datetime(format = ""),
-#                                    deleted_last_seen = col_character(),
-#                                    permission_denied = col_character()))
-# toc()
-
 ```
 
-```{r time_distribution_rds}
+```{r creation_time_dist}
 
-tic("num_created_date")
-num_created_date <- DATA_ALL %>% 
+tic("creation_time_dist")
+creation_time_dist <- WEIBOSCOPE_ALL %>% 
   mutate(created_date = to_date(created_at)) %>% 
   group_by(created_date) %>% 
   summarize(post_created = n()) %>% 
   collect()
 toc()
 
-num_created_date
+write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 
 ggplot(data = num_created_date, aes(x = created_date, y = post_created)) +
   geom_line()
+
+```
+
+
+```{r time_distribution_rds}
+
+# 
+
 
 week1 %>% 
   ggplot(aes(x = created_at)) +
