@@ -16,14 +16,25 @@ library(markdown)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-  theme = shinytheme("paper"),
+  # theme = shinytheme("paper"),
   
   navbarPage(
-    title = "Air Quality & Social Media Sentiment",
+    title = "Settling The Dust",
     tabPanel(
       title = "About",
       fluidRow(
+        includeCSS("www/header.css"),
+        tags$div(class="landing-wrapper",
+                 tags$img(src="https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg"),
+                 tags$div(
+                   class="caption",
+                   tags$span(class="border", style="font-size: 35px", "SETTLING THE DUST"),
+                   tags$br(),
+                   tags$br(),
+                   tags$span(class="border", "Air Pollution & Public Opinion in China")
+                 ),
         includeMarkdown("about.md")
+        )
       )
     ),
     tabPanel(

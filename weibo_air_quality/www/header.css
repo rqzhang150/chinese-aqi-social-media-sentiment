@@ -1,0 +1,65 @@
+html,body{
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* overriding bootstrap */
+.container-fluid,
+.navbar{
+    width: 100%;
+}
+
+/* layout css */
+.landing-wrapper {}
+
+
+.landing-wrapper .landing-block{
+    width: 100%;
+    height: 100%;
+}
+
+.landing-wrapper img{
+    height: auto;
+    width: 100%;
+    opacity: 0.65;
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  color: #000;
+  opacity: 0.85;
+}
+
+.caption span.border {
+  background-color: #111;
+  color: #fff;
+  padding: 18px;
+  font-size: 25px;
+  letter-spacing: 10px;
+}
+
+#desperate {
+    background: url("bgimg.jpg") fixed;
+    background-image: url("bgimg.jpg");
+    background-position-x: initial;
+    background-position-y: initial;
+    background-size: 100%;
+    background-repeat-x: initial;
+    background-repeat-y: initial;
+    background-attachment: fixed;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: initial;
+    background-size: 100%;
+    font-size: 25px;
+    color: black;
+}
+
+.landing-wrapper .foreground-content .foreground-text h1{font-size: 4.5rem;}
+.landing-wrapper .foreground-content .foreground-text p{font-size: 2.5rem;}

@@ -1,8 +1,5 @@
 # Air Quality and Social Media Sentiment in China
 
-![Smog in Beijing, China](https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg)
-Smog in Beijing, China. By *Lei Han* on [Flickr](https://www.flickr.com/photos/sunsetnoir/23424745665/in/photostream/). Licensed under [CC BY-NC-ND 2.0](https://creativecommons.org/licenses/by-nc-nd/2.0/).
-
 ## Description
 
 Exploratory data analysis between Air Quality-related data and social media (Weibo) sentiment data in 2012. Final project for Harvard College GOV 1005: Data
