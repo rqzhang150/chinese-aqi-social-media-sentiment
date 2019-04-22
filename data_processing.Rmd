@@ -14,6 +14,7 @@ library(gt)
 library(sparklyr)
 library(tictoc)
 library(lubridate)
+library(mapview)
 ```
 
 ```{r sparklyr_setup, include=TRUE}
@@ -39,7 +40,6 @@ sc <- spark_connect(master = "local",
                     config = conf)
 
 ```
-
 
 # Time Distribution in Week 1
 
@@ -101,7 +101,6 @@ toc()
 write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 ```
 
-
 ```{r time_distribution_rds}
 
 # 
@@ -144,6 +143,28 @@ week1_csv %>%
          subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
          caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
 toc()
+
+```
+
+# Spatial Data In China
+
+```{r china_provincial_map}
+
+# We use GADM Global Topolotical dataset to plot out the provincial level map of
+# China. However, due to the size of the map (~10M), plotting the original
+# simple feature would take too much time. Therefore, we simplify the map while
+# preserving its topology using st_simplify.
+
+CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
+  st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
+
+# This reduced the size of the map, and makes it more mamagable to print.
+
+object.size(CHN_simplified)
+
+# We print out China's map for testing.
+
+mapview(CHN_simplified)
 
 ```
 
