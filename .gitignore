@@ -2,8 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+.RDataTmp
 
 *.Rproj
+*.nb.html
 
 .DS_Store
 
