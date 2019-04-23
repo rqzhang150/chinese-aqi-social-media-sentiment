@@ -25,23 +25,6 @@ shinyUI(fluidPage(
   navbarPage(
     title = "Settling The Dust",
     tabPanel(
-      title = "About",
-      fluidRow(
-        includeCSS("www/header.css"),
-        tags$div(class="landing-wrapper",
-                 tags$img(src="https://live.staticflickr.com/7508/15769708856_3ecc0c9c43_k.jpg"),
-                 tags$div(
-                   class="caption",
-                   tags$span(class="border", style="font-size: 45px; font-family: 'Lora', serif;", "SETTLING THE DUST"),
-                   tags$br(),
-                   tags$br(),
-                   tags$span(class="border", "Air Pollution & Public Opinion in China")
-                 )
-        ),
-        includeMarkdown("about.md")
-      )
-    ),
-    tabPanel(
       title = "Environment and Political Legitimacy",
       sidebarLayout(
         sidebarPanel(
@@ -56,6 +39,24 @@ shinyUI(fluidPage(
     
     tabPanel(
       title = "Censorship"
+    ),
+    
+    tabPanel(
+      
+      title = "About",
+      fluidRow(
+        # includeCSS("www/header.css"),
+        # tags$div(class="landing-wrapper",
+        #          tags$img(src="https://live.staticflickr.com/7508/15769708856_3ecc0c9c43_k.jpg"),
+        #          tags$div(
+        #            class="caption",
+        #            tags$span(class="border", style="font-size: 45px; font-family: 'Lora', serif;", "SETTLING THE DUST"),
+        #            tags$br(),
+        #            tags$br(),
+        #            tags$span(class="border", "Air Pollution & Public Opinion in China")
+        #          ),
+                includeMarkdown("about.md")
+        )
     ),
     
     tabPanel(

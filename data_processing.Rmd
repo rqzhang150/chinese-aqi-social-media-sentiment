@@ -15,6 +15,11 @@ library(sparklyr)
 library(tictoc)
 library(lubridate)
 library(mapview)
+
+# devtools::install_github("harryprince/geospark")
+
+library(geospark)
+library(stringr)
 ```
 
 ```{r sparklyr_setup, include=TRUE}
@@ -34,10 +39,15 @@ conf$`sparklyr.cores.local` <- 4
 conf$`sparklyr.shell.driver-memory` <- "10G"
 conf$spark.memory.fraction <- 0.9
 
+conf$spark.serializer <- "org.apache.spark.serializer.KryoSerializer"
+conf$spark.kryo.registrator <- "org.datasyslab.geospark.serde.GeoSparkKryoRegistrator"
+
 # Connect to local Spark instance.
 
 sc <- spark_connect(master = "local",
                     config = conf)
+
+register_gis(sc)
 
 ```
 
@@ -81,10 +91,25 @@ WEIBOSCOPE_ALL <- spark_read_csv(sc,
     geo = "character",
     created_at = "timestamp",
     deleted_last_seen = "timestamp",
-    permission_denied = "timestamp"
+    permission_denied = "boolean"
   )
 )
 toc()
+
+week1 <- read_csv("datasets/weiboscope_data/week1.csv",
+         col_types = cols(
+  mid = col_character(),
+  retweeted_status_mid = col_character(),
+  uid = col_character(),
+  retweeted_uid = col_character(),
+  source = col_character(),
+  image = col_character(),
+  text = col_character(),
+  geo = col_character(),
+  created_at = col_datetime(format = ""),
+  deleted_last_seen = col_datetime(format = ""),
+  permission_denied = col_logical()
+))
 
 ```
 
@@ -165,6 +190,109 @@ object.size(CHN_simplified)
 # We print out China's map for testing.
 
 mapview(CHN_simplified)
+
+```
+
+```{r weibo_geo_dist}
+
+WEIBOSCOPE_GEO <- WEIBOSCOPE_ALL %>% 
+  
+  # We are only concerned about the points that have geo attribute.
+  
+  filter(!is.na(geo)) %>%
+  
+  select(geo) %>% 
+  
+  collect()
+  
+write_rds(WEIBOSCOPE_GEO, "weibo_air_quality/data/weiboscope_geo_all.rds")
+
+WEIBOSCOPE_GEO
+
+  st_as_sfc(WEIBOSCOPE_GEO$geo, EWKB = TRUE, crs = 4326) %>% 
+  
+  st_
+
+test <- week1 %>% 
+  filter(!is.na(geo))
+
+
+test_point <- st_as_sfc(test$geo, EWKB = TRUE, crs = 4326)
+
+st_intersection(CHN_simplified, test_point)
+
+st_transform(test_point$geo, 4326)
+
+lengths(st_covers(CHN_simplified, test_point$geo))
+
+mapview(list(CHN_simplified, test_point))
+
+```
+
+# Censorship Frequency
+
+```{r}
+
+permission_denied_dist <- WEIBOSCOPE_ALL %>% 
+  filter(!is.na(permission_denied)) %>% 
+  mutate(created_date = to_date(created_at)) %>% 
+  group_by(created_date) %>% 
+  summarize(deleted_count = n()) %>% 
+  collect()
+
+write_rds(permission_denied_dist, "weibo_air_quality/data/permission_denied_dist.rds")
+
+permission_denied_all <- WEIBOSCOPE_ALL %>% 
+  filter(!is.na(permission_denied)) %>% 
+  collect()
+
+write_rds(permission_denied_all, "weibo_air_quality/data/permission_denied_all.rds")
+
+
+permission_denied_dist
+
+
+```
+
+
+# Keyword Frequency
+
+```{r}
+
+keywords <- c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩")
+
+frequency <- tibble(filter_keyword = character(),
+                    created_date = date(),
+                    post_created = integer())
+
+for (keyword in keywords) {
+  WEIBOSCOPE_ALL %>% 
+    filter(str_detect(text, keyword)) %>% 
+    mutate(created_date = to_date(created_at),
+           filter_keyword = keyword) %>% 
+    group_by(filter_keyword, created_date) %>% 
+    summarize(post_created = n()) %>% 
+    collect() %>% 
+    bind_rows(frequency) -> frequency
+}
+
+write_rds(frequency, "weibo_air_quality/data/keywords_freq_dist.rds")
+
+
+# for (keyword in keywords) {
+#   week1 %>% 
+#     filter(str_detect(text, keyword)) %>% 
+#     mutate(created_date = as_date(created_at),
+#            filter_keyword = keyword) %>% 
+#     group_by(filter_keyword, created_date) %>% 
+#     summarize(post_created = n()) %>% 
+#     bind_rows(frequency) -> frequency
+# }
+
+frequency %>% 
+  ggplot(aes(x = created_date, y = post_created, color = filter_keyword)) +
+    geom_line()
+
 
 ```
 
