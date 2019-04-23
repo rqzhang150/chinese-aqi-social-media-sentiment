@@ -16,6 +16,12 @@ library(markdown)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
+  
+  output$censorshipTimeDist <- renderImage({
+    list(src = "censorship_dist_plot.gif",
+         contentType = "image/gif")},
+    deleteFile = FALSE
+  )
    
   output$creationTimePlot <- renderPlot({
     

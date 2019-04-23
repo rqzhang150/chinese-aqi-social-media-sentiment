@@ -20,6 +20,7 @@ library(mapview)
 
 library(geospark)
 library(stringr)
+library(gganimate)
 ```
 
 ```{r sparklyr_setup, include=TRUE}
@@ -241,6 +242,36 @@ permission_denied_dist <- WEIBOSCOPE_ALL %>%
   collect()
 
 write_rds(permission_denied_dist, "weibo_air_quality/data/permission_denied_dist.rds")
+
+permission_denied_dist <- read_rds("weibo_air_quality/data/permission_denied_dist.rds")
+
+censorship_dist_plot <- permission_denied_dist %>% 
+  ggplot(aes(x = created_date, y = deleted_count)) +
+    geom_line(color = "#d11141") +
+    transition_reveal(created_date) +
+    theme_minimal() +
+    labs(title = "",
+         x = NULL,
+         y = "Number of Monitored Censored Posts",
+         caption = "Source: Open WeiboScope/Hong Kong University") +
+    theme(panel.grid.minor = element_blank())
+
+animate(censorship_dist_plot, 
+        nframes = 365,
+        fps = 30,
+        duration = 8,
+        end_pause = 150,
+        width = 1000,
+        height = 500)
+
+anim_save("weibo_air_quality/censorship_dist_plot.gif", animation = censorship_dist_plot,
+          nframes = 365,
+          fps = 30,
+          duration = 10,
+          end_pause = 150,
+          width = 800,
+          height = 400)
+
 
 permission_denied_all <- WEIBOSCOPE_ALL %>% 
   filter(!is.na(permission_denied)) %>% 

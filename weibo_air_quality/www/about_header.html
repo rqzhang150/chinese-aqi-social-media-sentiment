@@ -12,70 +12,37 @@ body, html {
   color: #777;
 }
 
-.bg {
-  position: relative;
-  opacity: 0.65;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+.statement {
+    background: url(https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg) center rgba(0,0,0,.5);
+    padding: 60px 0;
+    line-height: 1.5;
+    position: relative;
 }
 
-.bg img {
-  height: 100%
+.outline {
+    background-color: rgba(255,255,255,.75);
+    color: #000;
 }
 
-.bgimg-1, .bgimg-2, .bgimg-3 {
-  position: relative;
-  opacity: 0.65;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-
-}
-.bgimg-1 {
-  background-image: url("bgimg.jpg");
-  height: 100%;
+.container {
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
-.caption {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  text-align: center;
-  color: #000;
-}
-
-.caption span.border {
-  background-color: #111;
-  color: #fff;
-  padding: 18px;
-  font-size: 25px;
-  letter-spacing: 10px;
-}
-
-h3 {
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  font: 20px "Lato", sans-serif;
-  color: #111;
-}
 </style>
 </head>
 <body>
 
-<div, class="bg">
-  <img src="https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg">
-</div>
+    <section class="statement">
+        <a href="https://nirvana.news/s.php?n=2018010101" target="_blank" class="overlay"></a>
+        <div class="container">
+            <h1><span class="outline">SETTLING THE DUST</span></h1>
+            <h4><span class="outline">&#12288;涅槃新闻 2018 年新年献词&#12288;>&#12288;</span></h4>
+        </div>
+    </section>
 
-<div class="bgimg-1">
-  <div class="caption">
-    <span class="border">FULL PAGE</span><br>
-    <span class="border">BACKGROUND IMAGE</span>
-  </div>
-</div>
-
-<p style="padding:5px 15px">This example creates a full page background image. Try to resize the browser window to see how it always will cover the full screen (when scrolled to top), and that it scales nicely on all screen sizes.</p>
 
 </body>
 </html>

@@ -26,12 +26,14 @@ shinyUI(fluidPage(
     title = "Settling The Dust",
     tabPanel(
       title = "Environment and Political Legitimacy",
+      includeHTML("www/about_header.html"),
       sidebarLayout(
         sidebarPanel(
         ),
         
         # Show a plot of the generated distribution
         mainPanel(
+          imageOutput("censorshipTimeDist"),
           plotOutput("creationTimePlot")
         )
       )
