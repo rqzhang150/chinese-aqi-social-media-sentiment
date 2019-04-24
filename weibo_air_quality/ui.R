@@ -33,7 +33,13 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 3),
         column(width = 6,
-               tags$p(tags$span("S",class = "firstcharacter"), "ome random text.")),
+               tags$br(),
+
+               tags$p(tags$span("T",class = "firstcharacter"), "hree hundred million. That is the number of Chinese people who had watched ", tags$i("Under the Done"),", a documentary on air pollution produced by a former investigative journalist. Despite the documentary, viewed by more than a quarter of China’s population, had been erased of all its traces on the Internet seven days after its release, it had seared one word into the collective consciousness of the Chinese populace."),
+               tags$p(tags$b('"Smog."')),
+               tags$p("Comprising industrial emissions and organic compounds, severe smog can dramatically hinder visibility, and the particulate matters (PM2.5) in the highly polluted air can penetrate even into the circulatory system."),
+               tags$br()
+               ),
         column(width = 3)
       ),
       
@@ -57,7 +63,11 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 3),
         column(width = 6,
-               tags$p("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut maximus sem eget quam porttitor lacinia. Phasellus libero nulla, egestas id ullamcorper elementum, rhoncus ut nibh. Phasellus fermentum sollicitudin finibus. Pellentesque quis hendrerit dui, a congue nisl. Integer sodales eget massa at eleifend. Morbi posuere arcu libero, sit amet molestie ipsum pellentesque vitae. Etiam blandit lacus vitae leo ultricies, eget efficitur odio vehicula. Quisque ullamcorper urna et imperdiet convallis. Nulla a lorem iaculis, blandit magna a, cursus ante. Duis fringilla justo at bibendum porta.")),
+               tags$br(),
+               tags$p("This seemingly innocuous, mist-like weather phenomenon had since then become a visceral indicator of government’s failure to protect the environment. Fierce criticisms were hurled against the central government due to its weak measures in protecting the environment, and when air filtration devices were found in a photograph on a central government meeting, the anger turned to the political system itself."),
+               tags$p("Smog is no strange face in this region. While the documentary sparked a national outcry on air pollution and governmental inaction, the lengthy processes of awareness-building and consensus-reaching, which extend back to 2012, serve as essential foundations for those actions."),
+               tags$p("Weibo, a social media service resembling Twitter, had played an indispensable role in those processes. Effective censorship on social media sites like Weibo, back in 2012, was not in the realm of possibility due to technological limits. As a result, an active sphere of discussion emerged on the platform."),
+               tags$br()),
         column(width = 3)
       ),
       
