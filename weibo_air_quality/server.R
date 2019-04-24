@@ -17,8 +17,13 @@ library(markdown)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
+  output$pm25map <- renderImage({
+    list(src = paste0("pm25_graphs/pm25_", input$pm25_year, ".png"),
+         contentType = "image/png")},
+  deleteFile = FALSE)
+  
   output$censorshipTimeDist <- renderImage({
-    list(src = "censorship_dist_plot.gif",
+    list(src = "www/censorship_dist_plot.gif",
          contentType = "image/gif")},
     deleteFile = FALSE
   )
@@ -33,16 +38,18 @@ shinyServer(function(input, output) {
     # TODO: 
     # (1) Implement sidebar that allows users to adjust the range date displayed.
     # (2) Change y scale break formatting
-    
-    ggplot(data = creation_time_dist, aes(x = created_date, y = post_created)) +
-      geom_line() +
-      theme_minimal() +
-      scale_y_continuous() +
-      labs(x = NULL,
-           y = "Number of Weibo Post Per Day",
-           title = paste("Variations In Number of Weibo Posts"),
-           subtitle = paste("Number of Weibo posts between", (creation_time_dist %>% arrange(created_date) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")), "and", (creation_time_dist %>% arrange(desc(created_date)) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")),"."),
-           caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
+    creation_time_dist %>% 
+      filter(created_date >= input$creationTimeDate[1] &
+               created_date <= input$creationTimeDate[2]) %>% 
+      ggplot(aes(x = created_date, y = post_created)) +
+        geom_line() +
+        theme_minimal() +
+        scale_y_continuous() +
+        labs(x = NULL,
+             y = "Number of Weibo Post Per Day",
+             title = paste("Variations In Number of Weibo Posts"),
+             subtitle = paste("Number of Weibo posts between", (creation_time_dist %>% arrange(created_date) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")), "and", (creation_time_dist %>% arrange(desc(created_date)) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")),"."),
+             caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
   })
   
 })

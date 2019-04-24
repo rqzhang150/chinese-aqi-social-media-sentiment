@@ -25,15 +25,63 @@ shinyUI(fluidPage(
   navbarPage(
     title = "Settling The Dust",
     tabPanel(
-      title = "Environment and Political Legitimacy",
+      title = "Pollution: A Legitimacy Issue",
       includeHTML("www/about_header.html"),
+      includeCSS("www/style.css"),
+      
+      
+      fluidRow(
+        column(width = 3),
+        column(width = 6,
+               tags$p(tags$span("S",class = "firstcharacter"), "ome random text.")),
+        column(width = 3)
+      ),
+      
+      fluidRow(
+        column(width = 3,
+               sliderInput(
+                 inputId = "pm25_year",
+                 label = "year",
+                 min = 1998,
+                 max = 2016,
+                 step = 1,
+                 value = 2012,
+                 animate = TRUE,
+                 ticks = FALSE,
+                 sep = ""
+               )),
+        column(width = 9,
+               imageOutput("pm25map"))
+      ),
+      
+      fluidRow(
+        column(width = 3),
+        column(width = 6,
+               tags$p("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut maximus sem eget quam porttitor lacinia. Phasellus libero nulla, egestas id ullamcorper elementum, rhoncus ut nibh. Phasellus fermentum sollicitudin finibus. Pellentesque quis hendrerit dui, a congue nisl. Integer sodales eget massa at eleifend. Morbi posuere arcu libero, sit amet molestie ipsum pellentesque vitae. Etiam blandit lacus vitae leo ultricies, eget efficitur odio vehicula. Quisque ullamcorper urna et imperdiet convallis. Nulla a lorem iaculis, blandit magna a, cursus ante. Duis fringilla justo at bibendum porta.")),
+        column(width = 3)
+      ),
+      
+      # fluidRow(
+      #   column(width = 2),
+      #   column(width = 8,
+      #          imageOutput("censorshipTimeDist")),
+      #   column(width = 2)
+      # ),
+      
+      
       sidebarLayout(
         sidebarPanel(
+          dateRangeInput(inputId = "creationTimeDate",
+                         label = "Date",
+                         start = "2012-01-01",
+                         end = "2012-12-31",
+                         min = "2012-01-01",
+                         max = "2012-12-31",
+                         startview = "year")
         ),
         
         # Show a plot of the generated distribution
         mainPanel(
-          imageOutput("censorshipTimeDist"),
           plotOutput("creationTimePlot")
         )
       )
