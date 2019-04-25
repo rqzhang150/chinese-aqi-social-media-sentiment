@@ -28,12 +28,12 @@ shinyUI(fluidPage(
       title = "Pollution: A Legitimacy Issue",
       includeHTML("www/about_header.html"),
       includeCSS("www/style.css"),
+      tags$p(class = "source-note", style = "text-align: right;", "Tiananmen Square under Smog. By Lei Han on Flickr. Image licensed under CC BY-NC-ND 2.0."),
       
       
       fluidRow(
         column(width = 3),
         column(width = 6,
-               tags$br(),
                tags$h2("Pollution: A Legitimacy Issue"),
 
                tags$p(tags$span("T",class = "firstcharacter"), "hree hundred million. That is the number of Chinese people who had watched ", tags$i("Under the Done"),", a documentary on air pollution produced by a former investigative journalist. Despite the documentary, viewed by more than a quarter of China’s population, had been erased of all its traces on the Internet seven days after its release, it had seared one word into the collective consciousness of the Chinese populace."),
@@ -76,7 +76,7 @@ shinyUI(fluidPage(
                tags$br(),
                tags$p("This seemingly innocuous, mist-like weather phenomenon had since then become a visceral indicator of government’s failure to protect the environment. Fierce criticisms were hurled against the central government due to its weak measures in protecting the environment, and when air filtration devices were found in a photograph on a central government meeting, the anger turned to the political system itself."),
                tags$p("Smog is no strange face in this region. While the documentary sparked a national outcry on air pollution and governmental inaction, the lengthy processes of awareness-building and consensus-reaching, which extend back to 2012, serve as essential foundations for those actions."),
-               tags$p("Weibo, a social media service resembling Twitter, had played an indispensable role in those processes. Effective censorship on social media sites like Weibo, back in 2012, was not in the realm of possibility due to technological limits. As a result, an active sphere of discussion emerged on the platform."),
+               tags$p("Weibo (微博), a social media service resembling Twitter, had played an indispensable role in those processes. Effective censorship on social media sites like Weibo, back in 2012, was not in the realm of possibility due to technological limits. As a result, an active sphere of discussion emerged on the platform."),
                tags$br()),
         column(width = 3)
       ),
@@ -85,6 +85,7 @@ shinyUI(fluidPage(
       sidebarLayout(
         position = "right",
         sidebarPanel(
+          tags$h4("WeiboScope Open: An Overview"),
           helpText("Select the range of date in 2012 for displayed Weibo posts statistics."),
           dateRangeInput(inputId = "creationTimeDate",
                          label = "Range of Date",
@@ -92,7 +93,14 @@ shinyUI(fluidPage(
                          end = "2012-12-31",
                          min = "2012-01-01",
                          max = "2012-12-31",
-                         startview = "year")
+                         startview = "year"),
+          tags$p(tags$b("Number of Posts in the Dataset:")),
+          
+          # Hardcoded because it would be extremely computationally expensive to calculate on the fly.
+          
+          tags$p("226,841,122"),
+          tags$p(tags$b("Dataset Size:")),
+          tags$p("~45GB")
         ),
         
         # Show a plot of the generated distribution
@@ -121,7 +129,66 @@ shinyUI(fluidPage(
                tags$h2("Woes of Development")
         ),
         column(width = 3)
+      ),
+    
+      fluidRow(
+        column(width = 1),
+        column(width = 10,
+               sidebarLayout(
+                 position = "left",
+                 sidebarPanel(
+                   helpText("not yet"),
+                   sliderInput(
+                     inputId = "gdp_year",
+                     label = "Year",
+                     value = c(1960, 2017),
+                     min = 1960,
+                     max = 2017,
+                     step = 1,
+                     sep = ""
+                   )
+                 ),
+                 
+                 # Show a plot of the generated distribution
+                 mainPanel(
+                   plotOutput("gdpPlot"),
+                   tags$p(class = "source-note", "Data Source: World Bank Development Indicators: GDP (current US$) by the World Bank Group. Data licensed under CC BY 4.0.")
+                 )
+               )
+        ),
+        column(width = 1)
+      ),
+      
+      fluidRow(
+        column(width = 1),
+        column(width = 10,
+               tags$br(),
+               sidebarLayout(
+                 position = "right",
+                 sidebarPanel(
+                   helpText("not yet"),
+                   sliderInput(
+                     inputId = "urbanization_year",
+                     label = "Year",
+                     value = c(1960, 2017),
+                     min = 1960,
+                     max = 2017,
+                     step = 1,
+                     sep = ""
+                   )
+                 ),
+                 
+                 # Show a plot of the generated distribution
+                 mainPanel(
+                   plotOutput("urbanizationPlot"),
+                   tags$p(class = "source-note", "Data Source: World Bank Development Indicators: Urban population (% of total) by the World Bank Group. Data licensed under CC BY 4.0.")
+                 )
+               ),
+        column(width = 1)
       )
+    )
+      
+      
       
     ),
     
