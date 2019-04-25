@@ -9,6 +9,8 @@ html,body{
 p {
   color: #000000;
   font-family: Georgia;
+  max-width: 500px;
+  margin: 1rem auto;
 }
 
 .firstcharacter {
@@ -20,6 +22,16 @@ p {
   padding-top: 4px;
   padding-right: 8px;
   padding-left: 3px;
+}
+
+.source-note {
+    font-family: Knowledge, "Source Sans Pro", Arial, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.0rem;
+    color: #666666;
+    font-weight: 300;
+    margin: 0 0; 
+    max-width: unset;
 }
 
 #censorshipTimeDist {
