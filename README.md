@@ -32,7 +32,6 @@ The repository comprises two components: a data processing component and a Shiny
 └── weibo_air_quality
     ├── about.md
     ├── acknowledgement.md
-    ├── censorship_dist_plot.gif
     ├── data
     │   ├── china_gdp.rds
     │   ├── creation_time_dist.rds

@@ -34,9 +34,7 @@ Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Conte
 
 conf <- list()
 
-# Assign 4 CPU cores, 10G memory to process the data.
-
-conf$`sparklyr.cores.local` <- 4
+conf$`sparklyr.cores.local` <- 8
 conf$`sparklyr.shell.driver-memory` <- "10G"
 conf$spark.memory.fraction <- 0.9
 
@@ -58,7 +56,7 @@ register_gis(sc)
 
 # Time the loading time for the csv files.
 
-tic("sparkload")
+tic("weiboscope_load_full")
 
 # Read all WeiboScope csv files to WEIBOSCOPE_ALL variable through spark. The
 # reason that we use Spark is that the files are too big to be stored in memory.
@@ -97,78 +95,103 @@ WEIBOSCOPE_ALL <- spark_read_csv(sc,
 )
 toc()
 
-week1 <- read_csv("datasets/weiboscope_data/week1.csv",
-         col_types = cols(
-  mid = col_character(),
-  retweeted_status_mid = col_character(),
-  uid = col_character(),
-  retweeted_uid = col_character(),
-  source = col_character(),
-  image = col_character(),
-  text = col_character(),
-  geo = col_character(),
-  created_at = col_datetime(format = ""),
-  deleted_last_seen = col_datetime(format = ""),
-  permission_denied = col_logical()
-))
+# This chunk of code is for small-scale testing of WeiboScope Open data in
+# Spark.
+
+tic("weiboscope_load_test")
+WEIBOSCOPE_TEST <- spark_read_csv(sc,
+  name = "weiboscope_test", 
+  
+  # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
+  # Using wildcard, we read in all the data in that directory. Because
+  # Weiboscope data already contains timestamp of the posts, we do not worry
+  # about the filename.
+  
+  path = "datasets/weiboscope_data/week4.csv",
+  
+  # Specifying the column types manually without letting Spark infering the
+  # column types. The following column types are not specified under R coltypes,
+  # but instead uses Spark SQL format.
+  
+  infer_schema = FALSE,
+  columns = list(
+    mid = "character",
+    retweeted_status_mid = "character",
+    uid = "character",
+    retweeted_uid = "character",
+    source = "character",
+    image = "integer",
+    text = "character",
+    geo = "character",
+    created_at = "timestamp",
+    deleted_last_seen = "timestamp",
+    permission_denied = "boolean"
+  )
+)
+toc()
 
 ```
 
 ```{r creation_time_dist}
 
+# Using all WeiboScope data in Spark environment, we hope to calculate how many
+# posts are posted everyday in 2012.
+
 tic("creation_time_dist")
 creation_time_dist <- WEIBOSCOPE_ALL %>% 
+  
+  #Due to Spark SQL settings, we imported created_at variable as a timestamp.
+  #Because of Spark SQL grammar constraint, we cannot use as_date() in
+  #Lubridate. We instead use to_date function provided in Spark's HIVE
+  #functions. By using this, we obtain the date portion of created_at varibale.
+  
   mutate(created_date = to_date(created_at)) %>% 
   group_by(created_date) %>% 
+  
+  # Calculate how many posts are created in each day.
+  
   summarize(post_created = n()) %>% 
+  
+  # Function specific to Spark. Use collect() to calculate the result and put
+  # the result into R workspace.
+  
   collect()
 toc()
+
+# This takes a lot of computational power and time to calculate. Thus, we save
+# our result into an RDS file for our Shiny app to use.
 
 write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 ```
 
-```{r time_distribution_rds}
+```{r time_distribution_testing}
 
+# # Code used for testing when generating the time distribution plot.
 # 
-
-
-week1 %>% 
-  ggplot(aes(x = created_at)) +
-    geom_freqpoly(binwidth = 600)
-
-week1 %>% 
-  mutate(created_at = ymd_hms(created_at))
-
-week1 %>% 
-  mutate(week_day = day(created_at))
-
-week1 %>% 
-  
-
-tic("week1_spark_graph")
-week1 %>% 
-  ggplot(aes(x = created_at)) +
-    geom_freqpoly(binwidth = 600) +
-    theme_minimal() +
-    labs(x = NULL,
-         y = "Number of Posts Per Minute",
-         title = paste("Variations In Number of Weibo Posts Across A Week"),
-         subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
-         caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
-toc()
-
-
-tic("week1_graph")
-week1_csv %>% 
-  ggplot(aes(x = created_at)) +
-    geom_freqpoly(binwidth = 600) +
-    theme_minimal() +
-    labs(x = NULL,
-         y = "Number of Posts Per Minute",
-         title = paste("Variations In Number of Weibo Posts Across A Week"),
-         subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
-         caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
-toc()
+# tic("week1_spark_graph")
+# week1 %>% 
+#   ggplot(aes(x = created_at)) +
+#     geom_freqpoly(binwidth = 600) +
+#     theme_minimal() +
+#     labs(x = NULL,
+#          y = "Number of Posts Per Minute",
+#          title = paste("Variations In Number of Weibo Posts Across A Week"),
+#          subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
+#          caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
+# toc()
+# 
+# 
+# tic("week1_graph")
+# week1_csv %>% 
+#   ggplot(aes(x = created_at)) +
+#     geom_freqpoly(binwidth = 600) +
+#     theme_minimal() +
+#     labs(x = NULL,
+#          y = "Number of Posts Per Minute",
+#          title = paste("Variations In Number of Weibo Posts Across A Week"),
+#          subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
+#          caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
+# toc()
 
 ```
 
@@ -184,7 +207,9 @@ toc()
 CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
   st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
 
-# This reduced the size of the map, and makes it more mamagable to print.
+# This reduced the size of the map, and makes it more mamagable to print. To
+# check whether it's feasible to print, we manually examine the size of the
+# simplified map.
 
 object.size(CHN_simplified)
 
@@ -194,39 +219,133 @@ mapview(CHN_simplified)
 
 ```
 
+```{r regex}
+s <- "POINT(12.2342342354234234234234232323423 0123)"
+sub(".*\\( *(.*?) *[[:space:]].*", "\\1", s)
+sub(".*[[:space:]] *(.*?) *\\).*", "\\1", s)
+```
+
+
 ```{r weibo_geo_dist}
 
-WEIBOSCOPE_GEO <- WEIBOSCOPE_ALL %>% 
+# # # Some Code Used for Initial Testing. Preserved for later reference
+# # 
+# # WEIBOSCOPE_GEO <- WEIBOSCOPE_ALL %>%
+# # 
+# #   # We are only concerned about the points that have geo attribute.
+# # 
+# #   filter(!is.na(geo)) %>%
+# # 
+# #   select(geo) %>%
+# # 
+# #   collect()
+# # 
+# # write_rds(WEIBOSCOPE_GEO, "weibo_air_quality/data/weiboscope_geo_all.rds")
+# # 
+# # WEIBOSCOPE_GEO
+# # 
+# #   st_as_sfc(WEIBOSCOPE_GEO$geo, EWKB = TRUE, crs = 4326) %>%
+# # 
+# #   st_
+# # 
+# # test <- week1 %>%
+# #   filter(!is.na(geo))
+# # 
+# # 
+# # test_point <- st_as_sfc(test$geo, EWKB = TRUE, crs = 4326)
+# # 
+# # st_intersection(CHN_simplified, test_point)
+# # 
+# # st_transform(test_point$geo, 4326)
+# # 
+# # lengths(st_covers(CHN_simplified, test_point$geo))
+# # 
+# # mapview(list(CHN_simplified, test_point))
+# 
+
+TEST_WKT <- WEIBOSCOPE_TEST %>%
+  filter(!is.na(geo),
+         str_detect(geo, "POINT"),
+         geo != "POINT(0 0)") %>%
+  mutate(weibo_geo_wkt = st_geomfromwkt(geo))
+
+# WeiboScope Open's Geographical data is coded as character in the format of
+# "POINT(0 0)". We would like to import this into our Spark environment for
+# calculation. However, we cannot use sf to directly calculate due to the memory
+# constraint. To achieve this, we use Geospark package to complete the
+# calculation directly in Spark.
+
+WEIBOSCOPE_TEST
+
+# 0 < as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(1), pattern = "POINT(")),
+#          as.numeric(str_remove(str_split_fixed(A, pattern = " ") %>% pluck(1), pattern = "POINT(")) < 180,
+#          -90 < as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")), 
+#          as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")) < 90
+
+WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>% 
   
-  # We are only concerned about the points that have geo attribute.
+  mutate(longitude = regexp_extract(geo, '[(](.*?)\\\\s'),
+         latitude = regexp_extract(geo, '\\\\s(.*?)[)]' )) %>% 
   
-  filter(!is.na(geo)) %>%
+  # We filter out the geo data that is NA. And remove rows that contains
+  # erroneous data. We also remove obviously unrealisitc points.
   
-  select(geo) %>% 
+  filter(!is.na(geo),
+         str_detect(geo, "POINT"),
+         geo != "POINT(0 0)",
+         between(longitude, 0, 180),
+         between(latitude, -90, 90)) %>% 
   
+  # Within Spark, we use GeoSpark function st_geomfromwkt to transform character
+  # string contained in geo to a Simple Feature object within Spark supported by
+  # Geospark. We store the result of this transformation into variable
+  # weibo_geo_wkt.
+  
+  mutate(weibo_geo_wkt = st_geomfromwkt(geo)) %>% 
+  filter(!is.na(weibo_geo_wkt))
+
+WEIBOSCOPE_GEO_WKT
+
+# Then, we need to transform the simplified Chinese map into a format that is
+# compatible to GeoSpark. To achieve this, we first convert it into a dataframe,
+# and transform its geometry into character strings. We then remove its geometry
+# column that contains value incompatible with Spark.
+
+CHN_GeoSpark_Map <- as_data_frame(CHN_simplified) %>% 
+  mutate(chn_map_geom = st_as_text(geometry),
+         geometry = NULL)
+
+# Put the Chinese Map into Spark storage.
+
+CHN_GeoSpark_Map <- copy_to(sc, CHN_GeoSpark_Map)
+
+# Within Spark's storage, we transform the the character that contains the
+# geographical boundary of China's administrative regions into Simple Feature
+# objects that can be processed in GeoSpark.
+
+CHN_GeoSpark_Map <- mutate(CHN_GeoSpark_Map, chn_geo_wkt = st_geomfromwkt(chn_map_geom))
+
+# We then use Geospark's st_join function to calculate their intersections. We
+# want to find out the number of posts in each province in each month.
+# Therefore, we specify join condition as contain, and let Spark calculate which
+# administrative zone a specific geotagged post is in.
+
+# We store this as an intermediate result, not collecting this into R workspace
+# for further data wrangling and analysis.
+
+geo_distribution <- st_join(CHN_GeoSpark_Map,
+                  WEIBOSCOPE_GEO_WKT,
+                  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+
+geo_time_count <- geo_distribution %>% 
+  mutate(created_month = month(to_date(created_at))) %>% 
+  group_by(NAME_1, NL_NAME_1, ENGTYPE_1, created_month) %>%
+  summarise(cnt = n()) %>% 
   collect()
-  
-write_rds(WEIBOSCOPE_GEO, "weibo_air_quality/data/weiboscope_geo_all.rds")
 
-WEIBOSCOPE_GEO
-
-  st_as_sfc(WEIBOSCOPE_GEO$geo, EWKB = TRUE, crs = 4326) %>% 
-  
-  st_
-
-test <- week1 %>% 
-  filter(!is.na(geo))
-
-
-test_point <- st_as_sfc(test$geo, EWKB = TRUE, crs = 4326)
-
-st_intersection(CHN_simplified, test_point)
-
-st_transform(test_point$geo, 4326)
-
-lengths(st_covers(CHN_simplified, test_point$geo))
-
-mapview(list(CHN_simplified, test_point))
+censored_geo_post <- geo_distribution %>% 
+  filter(!is.na(permission_denied)) %>% 
+  collect()
 
 ```
 

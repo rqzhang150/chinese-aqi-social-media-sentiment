@@ -176,6 +176,7 @@ shinyUI(fluidPage(
                      step = 1,
                      sep = ""
                    )
+                   
                  ),
                  
                  # Show a plot of the generated distribution
