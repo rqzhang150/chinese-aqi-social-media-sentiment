@@ -22,6 +22,16 @@ library(mapview)
 library(geospark)
 library(stringr)
 library(gganimate)
+library(janitor)
+
+# For processing GEOTiff files and generating PM2.5 Map.
+
+library(raster)
+library(rasterVis)
+library(rgdal)
+library(maps)
+library(mapdata)
+library(maptools)
 ```
 
 ```{r sparklyr_setup, include=TRUE}
@@ -120,7 +130,7 @@ spark_write_parquet(WEIBOSCOPE_ALL, "spark_parquets/weiboscope_all_before_partit
 WEIBOSCOPE_ALL <- spark_read_parquet(sc, name = "weiboscope", path = "spark_parquets/weiboscope_all.parquet/")
 
 # This chunk of code is for small-scale testing of WeiboScope Open data in
-# Spark.
+# Spark. Preserved for later use.
 
 # tic("weiboscope_load_test")
 # WEIBOSCOPE_TEST <- spark_read_csv(sc,
@@ -186,37 +196,6 @@ toc()
 # our result into an RDS file for our Shiny app to use.
 
 write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
-```
-
-```{r time_distribution_testing}
-
-# # Code used for testing when generating the time distribution plot.
-# 
-# tic("week1_spark_graph")
-# week1 %>% 
-#   ggplot(aes(x = created_at)) +
-#     geom_freqpoly(binwidth = 600) +
-#     theme_minimal() +
-#     labs(x = NULL,
-#          y = "Number of Posts Per Minute",
-#          title = paste("Variations In Number of Weibo Posts Across A Week"),
-#          subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
-#          caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
-# toc()
-# 
-# 
-# tic("week1_graph")
-# week1_csv %>% 
-#   ggplot(aes(x = created_at)) +
-#     geom_freqpoly(binwidth = 600) +
-#     theme_minimal() +
-#     labs(x = NULL,
-#          y = "Number of Posts Per Minute",
-#          title = paste("Variations In Number of Weibo Posts Across A Week"),
-#          subtitle = paste("Number of Weibo posts between", (week1 %>% arrange(created_at) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")), "and", (week1 %>% arrange(desc(created_at)) %>% head(1) %>% select(created_at) %>% pull() %>% format(format = "%B %d, %Y")),"."),
-#          caption = "HKU WeiboScope Data: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship \non Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy.\nIEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
-# toc()
-
 ```
 
 # Spatial Data In China
@@ -529,12 +508,6 @@ frequency %>%
 ```
 
 ```{r}
-library(raster)
-library(rasterVis)
-library(rgdal)
-library(maps)
-library(mapdata)
-library(maptools)
 
 pm25_1998 <- raster("datasets/sdei-pm25/sdei-global-annual-gwr-pm2-5-modis-misr-seawifs-aod-1998-geotiff/gwr_pm25_1998.tif")
 pm25_1999 <- raster("datasets/sdei-pm25/sdei-global-annual-gwr-pm2-5-modis-misr-seawifs-aod-1999-geotiff/gwr_pm25_1999.tif")
@@ -557,27 +530,6 @@ pm25_2015 <- raster("datasets/sdei-pm25/sdei-global-annual-gwr-pm2-5-modis-misr-
 pm25_2016 <- raster("datasets/sdei-pm25/sdei-global-annual-gwr-pm2-5-modis-misr-seawifs-aod-2016-geotiff/gwr_pm25_2016.tif")
 
 pm25_list <- c("pm25_1998", "pm25_1999", "pm25_2000", "pm25_2001", "pm25_2002", "pm25_2003", "pm25_2004", "pm25_2005", "pm25_2006", "pm25_2007", "pm25_2008", "pm25_2009", "pm25_2010", "pm25_2011", "pm25_2012", "pm25_2013", "pm25_2014", "pm25_2015", "pm25_2016")
-
-# pm25_2012 <- as.data.frame(raster("datasets/sdei-global-annual-gwr-pm2-5-modis-misr-seawifs-aod-2012-geotiff/gwr_pm25_2012.tif"),
-#                            xy = TRUE)
-# 
-# pm25_2012_df <- as.data.frame(pm25_2012, xy = TRUE)
-# 
-# ggplot(pm25_2012) %>% 
-#   geom_tile(aes(fill = factor(gwr_pm25_2012), alpha = 0.8))
-
-# ggplot() +
-#     geom_raster(aes(pm25_2012)) +
-#     scale_fill_viridis_c() +
-#     coord_quickmap()
-
-# plot(pm25_2012)
-# 
-# pm25_list <- "pm25_1998"
-# 
-# eval(as.name("pm25_1998"))
-
-# str_split("pm25_1998", pattern = "_")[[1]][2]
 
 colr <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')))
 
@@ -629,8 +581,6 @@ for (year in pm25_list) {
 # Economic Graphs
 
 ```{r economic_data_proc}
-
-library(janitor)
 
 indicators <- read_csv("datasets/World_Development_Indicators/03d8a56f-acd9-4053-adfd-b596413871f5_Data.csv") %>% 
   clean_names()
