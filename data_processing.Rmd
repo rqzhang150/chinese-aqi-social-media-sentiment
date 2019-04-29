@@ -34,7 +34,8 @@ Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Conte
 
 conf <- list()
 
-conf$`sparklyr.cores.local` <- 8
+conf$`sparklyr.cores.local` <- 1
+conf$spark.executor.cores <- 1
 conf$`sparklyr.shell.driver-memory` <- "10G"
 conf$spark.memory.fraction <- 0.9
 
@@ -94,6 +95,10 @@ WEIBOSCOPE_ALL <- spark_read_csv(sc,
   )
 )
 toc()
+
+spark_write_parquet(WEIBOSCOPE_ALL, "spark_parquets/weiboscope_all_before_partition.parquet")
+
+WEIBOSCOPE_ALL <- spark_read_parquet(sc, name = "weiboscope", path = "spark_parquets/weiboscope_all.parquet/")
 
 # This chunk of code is for small-scale testing of WeiboScope Open data in
 # Spark.
@@ -206,6 +211,8 @@ write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 
 CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
   st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
+  
+CHN_2 <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds")
 
 # This reduced the size of the map, and makes it more mamagable to print. To
 # check whether it's feasible to print, we manually examine the size of the
@@ -216,6 +223,10 @@ object.size(CHN_simplified)
 # We print out China's map for testing.
 
 mapview(CHN_simplified)
+
+mapview(year_total_geo, zcol = "total_posts",
+        layer.name = "Number of Posts",
+        viewer.suppress = TRUE)
 
 ```
 
@@ -282,6 +293,11 @@ WEIBOSCOPE_TEST
 #          -90 < as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")), 
 #          as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")) < 90
 
+sdf_num_partitions(WEIBOSCOPE_ALL)
+sdf_num_partitions(WEIBOSCOPE_GEO_WKT)
+sdf_nrow(WEIBOSCOPE_ALL)
+sdf_nrow(WEIBOSCOPE_GEO_WKT)
+
 WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>% 
   
   mutate(longitude = regexp_extract(geo, '[(](.*?)\\\\s'),
@@ -304,6 +320,14 @@ WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>%
   mutate(weibo_geo_wkt = st_geomfromwkt(geo)) %>% 
   filter(!is.na(weibo_geo_wkt))
 
+sdf_register(WEIBOSCOPE_GEO_WKT, name = "WEIBOSCOPE_GEO_WKT")
+
+spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_before_partition.parquet")
+
+WEIBOSCOPE_GEO_WKT <- sdf_repartition(WEIBOSCOPE_GEO_WKT, partitions = 35)
+
+spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_after_partition.parquet")
+
 WEIBOSCOPE_GEO_WKT
 
 # Then, we need to transform the simplified Chinese map into a format that is
@@ -311,19 +335,26 @@ WEIBOSCOPE_GEO_WKT
 # and transform its geometry into character strings. We then remove its geometry
 # column that contains value incompatible with Spark.
 
-CHN_GeoSpark_Map <- as_data_frame(CHN_simplified) %>% 
+WEIBOSCOPE_GEO_WKT <- spark_read_parquet(sc, name = "weiboscope_geo_wkt", path = "spark_parquets/weiboscope_geo_after_partition.parquet/")
+
+CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
   mutate(chn_map_geom = st_as_text(geometry),
          geometry = NULL)
 
 # Put the Chinese Map into Spark storage.
 
-CHN_GeoSpark_Map <- copy_to(sc, CHN_GeoSpark_Map)
+CHN_GeoSpark_Map_spark <- copy_to(sc, CHN_GeoSpark_Map_df)
 
 # Within Spark's storage, we transform the the character that contains the
 # geographical boundary of China's administrative regions into Simple Feature
 # objects that can be processed in GeoSpark.
 
-CHN_GeoSpark_Map <- mutate(CHN_GeoSpark_Map, chn_geo_wkt = st_geomfromwkt(chn_map_geom))
+CHN_GeoSpark_Map <- mutate(CHN_GeoSpark_Map_spark, chn_geo_wkt = st_geomfromwkt(chn_map_geom))
+
+# sdf_register(CHN_GeoSpark_Map, name = "CHN_GeoSpark_Map")
+
+CHN_GeoSpark_Map
+
 
 # We then use Geospark's st_join function to calculate their intersections. We
 # want to find out the number of posts in each province in each month.
@@ -336,6 +367,37 @@ CHN_GeoSpark_Map <- mutate(CHN_GeoSpark_Map, chn_geo_wkt = st_geomfromwkt(chn_ma
 geo_distribution <- st_join(CHN_GeoSpark_Map,
                   WEIBOSCOPE_GEO_WKT,
                   join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+
+sc_res <- st_join(CHN_GeoSpark_Map,
+                  WEIBOSCOPE_GEO_WKT,
+                  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")) %>% 
+  mutate(created_month = month(to_date(created_at))) %>% 
+  group_by(NAME_1, NL_NAME_1, ENGTYPE_1, created_month) %>%
+  summarise(cnt = n()) %>% 
+  collect()
+
+year_total_geo <- sc_res %>% 
+  group_by(NAME_1) %>% 
+  summarize(total_posts = sum(cnt)) %>% 
+  full_join(CHN_simplified) %>% 
+  st_as_sf()
+
+write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
+
+sdf_num_partitions(CHN_GeoSpark_Map)
+sdf_nrow(CHN_GeoSpark_Map)
+
+sdf_register(geo_distribution, name = "geo_distribution")
+
+tbl_cache(sc, "weiboscope_geo_wkt")
+
+tbl_cache(sc, "chn_geospark_map")
+
+tbl_cache(sc)
+
+spark_write_parquet(geo_distribution, path = "~/Documents/gov-1005-projects/chinese-aqi-social-media-sentiment/spark_parquets/geo_distribution.parquet")
+
+# spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.parquet")
 
 geo_time_count <- geo_distribution %>% 
   mutate(created_month = month(to_date(created_at))) %>% 

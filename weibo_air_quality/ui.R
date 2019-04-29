@@ -13,6 +13,7 @@ library(markdown)
 library(lubridate)
 library(shinythemes)
 library(markdown)
+library(mapview)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
@@ -74,7 +75,7 @@ shinyUI(fluidPage(
         column(width = 3),
         column(width = 6,
                tags$br(),
-               tags$p("This seemingly innocuous, mist-like weather phenomenon had since then become a visceral indicator of government’s failure to protect the environment. Fierce criticisms were hurled against the central government due to its weak measures in protecting the environment, and when air filtration devices were found in a photograph on a central government meeting, the anger turned to the political system itself."),
+               tags$p("This seemingly innocuous, mist-like weather phenomenon had since then become a visceral indicator of government’s failure to protect the environment. Fierce criticisms were hurled against the central government due to its weak measures in protecting the environment, and when air filtration devices were found in a photograph depicting a central government meeting, the anger turned to the political system - and the privilege that some enjoy - itself."),
                tags$p("Smog is no strange face in this region. While the documentary sparked a national outcry on air pollution and governmental inaction, the lengthy processes of awareness-building and consensus-reaching, which extend back to 2012, serve as essential foundations for those actions."),
                tags$p("Weibo (微博), a social media service resembling Twitter, had played an indispensable role in those processes. Effective censorship on social media sites like Weibo, back in 2012, was not in the realm of possibility due to technological limits. As a result, an active sphere of discussion emerged on the platform."),
                tags$br()),
@@ -126,7 +127,9 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 3),
         column(width = 6,
-               tags$h2("Woes of Development")
+               tags$h2("Woes of Development"),
+               tags$p(tags$span("R",class = "firstcharacter"), "eform efforts across 1980s and 90s were of significant importance to the economic development of Chinese economy. While the transformation to a market economy was not without painful episodes and is still ongoing until today, China has gone through a period of rapid development since then, accompanied by a series of social and cultural transformations."),
+               tags$p("The following plot demonstrate China's Gross Domestic Product since 1960 to 2017. Since 1960, China's GDP has grew by two degrees of magnitude and become the second largest economic entity in the world. After a series of structural economic reforms undertaken by the country's leadership in 1990s, Chinese economy had took off, and thus dramatically raised the standard of living for average Chinese people.")
         ),
         column(width = 3)
       ),
@@ -160,6 +163,14 @@ shinyUI(fluidPage(
       ),
       
       fluidRow(
+        column(width = 3),
+        column(width = 6,
+               tags$p(tags$span("I",class = "firstcharacter"), 'n spite of economic growth dubbed by some as "miracle", China has only recently become a country with more than half of its population residing in urban areas. Such transformation also dramatically altered China\'s social dynamic, ushering in a increasingly large group of urban middle class, and also led to a variety of social problems. Coupled with the spread of mobile devices and the increasing use of Internet among Chinese citizens, a new sphere for civil society and dissents have arisen out of the social media that have since become the new ground for people to voice their grievances and opinions.')
+        ),
+        column(width = 3)
+      ),
+      
+      fluidRow(
         column(width = 1),
         column(width = 10,
                tags$br(),
@@ -187,7 +198,17 @@ shinyUI(fluidPage(
                ),
         column(width = 1)
       )
+    ),
+    
+    fluidRow(
+      column(width = 3),
+      column(width = 6,
+             tags$p('Weibo was one of such example. In spite of government\'s demand for censorship, the technological capabilities were unable to satisfactorily fulfill such requirement, thus leaving precious room for the development of civil society organizations and coalitions. Internet and social media has become a form through which citizens access informed opinions by public intellectuals, who are often more sympathetic towards liberal causes. '),
+             tags$p("Bourne in this repressed but vibrant sphere of public discussion, air pollution and environmental protection grew as increasingly saliant topics, culminating ultimately in public controversies that would threaten the central government's legitimacy.")
+      ),
+      column(width = 3)
     )
+    
       
       
       
@@ -201,7 +222,16 @@ shinyUI(fluidPage(
                tags$h2("Bad Air, Bad Day?")
         ),
         column(width = 3)
+      ),
+      
+      fluidRow(
+        column(width = 2),
+        column(width = 8,
+               mapviewOutput("privincialDistribution")
+        ),
+        column(width = 2)
       )
+      
       
     ),
     

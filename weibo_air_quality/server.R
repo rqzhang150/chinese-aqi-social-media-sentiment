@@ -16,8 +16,14 @@ library(markdown)
 
 china_gdp <- read_rds("data/china_gdp.rds")
 development_indicators <- read_rds("data/development_indicators.rds")
+provDist <- read_rds("data/year_total_geo.rds")
 
 shinyServer(function(input, output) {
+  
+  output$privincialDistribution <- renderMapview(
+    mapview(year_total_geo, zcol = "total_posts",
+            layer.name = "Number of Posts")
+  )
   
   output$pm25map <- renderImage({
     list(src = paste0("pm25_graphs/pm25_", input$pm25_year, ".png"),
@@ -93,7 +99,7 @@ shinyServer(function(input, output) {
            subtitle = "China became predominantly urban in 2011.",
            x = NULL) +
       geom_hline(yintercept = 50, linetype="dashed", color = "red") +
-      scale_y_continuous(name = "Urban population (% of total)",
+      scale_y_continuous(name = "% of Total Population",
                          limits = c(0, 100),
                          breaks = seq(0, 100, by = 10),
                          labels = paste0(seq(0, 100, by = 10),"%")) +
