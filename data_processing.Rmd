@@ -16,7 +16,8 @@ library(tictoc)
 library(lubridate)
 library(mapview)
 
-# devtools::install_github("harryprince/geospark")
+# Installed through devtools::install_github("harryprince/geospark"). You would
+# also need to install Geospark directly on the Spark instance you have.
 
 library(geospark)
 library(stringr)
@@ -34,10 +35,18 @@ Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Conte
 
 conf <- list()
 
-conf$`sparklyr.cores.local` <- 1
-conf$spark.executor.cores <- 1
+# Usually I would set the local cores to 8 and unset executor cores so that
+# Spark utilizes the best options possible on the setup. However, there **might** be
+# an issue with the thread-safety of Geospark. Thus, I leave the options to only
+# assign one core to an executor here for debugging purposes.
+
+conf$`sparklyr.cores.local` <- 8
+# conf$spark.executor.cores <- 1
 conf$`sparklyr.shell.driver-memory` <- "10G"
 conf$spark.memory.fraction <- 0.9
+
+# Switching the default serializer to Kryo Serializer and register it to
+# Geospark. Kyro Serializer allows for more efficient serializing.
 
 conf$spark.serializer <- "org.apache.spark.serializer.KryoSerializer"
 conf$spark.kryo.registrator <- "org.datasyslab.geospark.serde.GeoSparkKryoRegistrator"
@@ -46,6 +55,8 @@ conf$spark.kryo.registrator <- "org.datasyslab.geospark.serde.GeoSparkKryoRegist
 
 sc <- spark_connect(master = "local",
                     config = conf)
+
+# GeoSpark registration.
 
 register_gis(sc)
 
@@ -96,44 +107,52 @@ WEIBOSCOPE_ALL <- spark_read_csv(sc,
 )
 toc()
 
+# It would usually takes ~20 minutes for Sparklyr to read in all the csv files.
+# We need something more efficient to store this dataset. Thus, after running
+# this for the first time, we store the intermediate dataset into a parquet file
+# - a file format designed for Spark and is much more efficient in terms of
+# storage usage and reading speed.
+
 spark_write_parquet(WEIBOSCOPE_ALL, "spark_parquets/weiboscope_all_before_partition.parquet")
+
+# Usually would run this, read the parquet files directly.
 
 WEIBOSCOPE_ALL <- spark_read_parquet(sc, name = "weiboscope", path = "spark_parquets/weiboscope_all.parquet/")
 
 # This chunk of code is for small-scale testing of WeiboScope Open data in
 # Spark.
 
-tic("weiboscope_load_test")
-WEIBOSCOPE_TEST <- spark_read_csv(sc,
-  name = "weiboscope_test", 
-  
-  # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
-  # Using wildcard, we read in all the data in that directory. Because
-  # Weiboscope data already contains timestamp of the posts, we do not worry
-  # about the filename.
-  
-  path = "datasets/weiboscope_data/week4.csv",
-  
-  # Specifying the column types manually without letting Spark infering the
-  # column types. The following column types are not specified under R coltypes,
-  # but instead uses Spark SQL format.
-  
-  infer_schema = FALSE,
-  columns = list(
-    mid = "character",
-    retweeted_status_mid = "character",
-    uid = "character",
-    retweeted_uid = "character",
-    source = "character",
-    image = "integer",
-    text = "character",
-    geo = "character",
-    created_at = "timestamp",
-    deleted_last_seen = "timestamp",
-    permission_denied = "boolean"
-  )
-)
-toc()
+# tic("weiboscope_load_test")
+# WEIBOSCOPE_TEST <- spark_read_csv(sc,
+#   name = "weiboscope_test", 
+#   
+#   # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
+#   # Using wildcard, we read in all the data in that directory. Because
+#   # Weiboscope data already contains timestamp of the posts, we do not worry
+#   # about the filename.
+#   
+#   path = "datasets/weiboscope_data/week4.csv",
+#   
+#   # Specifying the column types manually without letting Spark infering the
+#   # column types. The following column types are not specified under R coltypes,
+#   # but instead uses Spark SQL format.
+#   
+#   infer_schema = FALSE,
+#   columns = list(
+#     mid = "character",
+#     retweeted_status_mid = "character",
+#     uid = "character",
+#     retweeted_uid = "character",
+#     source = "character",
+#     image = "integer",
+#     text = "character",
+#     geo = "character",
+#     created_at = "timestamp",
+#     deleted_last_seen = "timestamp",
+#     permission_denied = "boolean"
+#   )
+# )
+# toc()
 
 ```
 
@@ -211,6 +230,8 @@ write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 
 CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
   st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
+
+# We load the 
   
 CHN_2 <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds")
 
@@ -230,55 +251,9 @@ mapview(year_total_geo, zcol = "total_posts",
 
 ```
 
-```{r regex}
-s <- "POINT(12.2342342354234234234234232323423 0123)"
-sub(".*\\( *(.*?) *[[:space:]].*", "\\1", s)
-sub(".*[[:space:]] *(.*?) *\\).*", "\\1", s)
-```
 
 
 ```{r weibo_geo_dist}
-
-# # # Some Code Used for Initial Testing. Preserved for later reference
-# # 
-# # WEIBOSCOPE_GEO <- WEIBOSCOPE_ALL %>%
-# # 
-# #   # We are only concerned about the points that have geo attribute.
-# # 
-# #   filter(!is.na(geo)) %>%
-# # 
-# #   select(geo) %>%
-# # 
-# #   collect()
-# # 
-# # write_rds(WEIBOSCOPE_GEO, "weibo_air_quality/data/weiboscope_geo_all.rds")
-# # 
-# # WEIBOSCOPE_GEO
-# # 
-# #   st_as_sfc(WEIBOSCOPE_GEO$geo, EWKB = TRUE, crs = 4326) %>%
-# # 
-# #   st_
-# # 
-# # test <- week1 %>%
-# #   filter(!is.na(geo))
-# # 
-# # 
-# # test_point <- st_as_sfc(test$geo, EWKB = TRUE, crs = 4326)
-# # 
-# # st_intersection(CHN_simplified, test_point)
-# # 
-# # st_transform(test_point$geo, 4326)
-# # 
-# # lengths(st_covers(CHN_simplified, test_point$geo))
-# # 
-# # mapview(list(CHN_simplified, test_point))
-# 
-
-TEST_WKT <- WEIBOSCOPE_TEST %>%
-  filter(!is.na(geo),
-         str_detect(geo, "POINT"),
-         geo != "POINT(0 0)") %>%
-  mutate(weibo_geo_wkt = st_geomfromwkt(geo))
 
 # WeiboScope Open's Geographical data is coded as character in the format of
 # "POINT(0 0)". We would like to import this into our Spark environment for
@@ -286,19 +261,13 @@ TEST_WKT <- WEIBOSCOPE_TEST %>%
 # constraint. To achieve this, we use Geospark package to complete the
 # calculation directly in Spark.
 
-WEIBOSCOPE_TEST
-
-# 0 < as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(1), pattern = "POINT(")),
-#          as.numeric(str_remove(str_split_fixed(A, pattern = " ") %>% pluck(1), pattern = "POINT(")) < 180,
-#          -90 < as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")), 
-#          as.numeric(str_remove(str_split(A, pattern = " ") %>% pluck(2), pattern = ")")) < 90
-
-sdf_num_partitions(WEIBOSCOPE_ALL)
-sdf_num_partitions(WEIBOSCOPE_GEO_WKT)
-sdf_nrow(WEIBOSCOPE_ALL)
-sdf_nrow(WEIBOSCOPE_GEO_WKT)
-
 WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>% 
+  
+  # In the Weiboscope Data, because the longitude and latitude is coded as
+  # string character, we need to extract them into separate variables in order
+  # to manipulate the data. Spark does not support stringr functions, therefore,
+  # we are using regex expressions (Java format, since Spark is based on Java)
+  # to extract them.
   
   mutate(longitude = regexp_extract(geo, '[(](.*?)\\\\s'),
          latitude = regexp_extract(geo, '\\\\s(.*?)[)]' )) %>% 
@@ -307,8 +276,21 @@ WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>%
   # erroneous data. We also remove obviously unrealisitc points.
   
   filter(!is.na(geo),
+         
+         # There are some instances where the geo column contains information
+         # that is not geo information at all. We filter for the rows that
+         # confrom to the format.
+         
          str_detect(geo, "POINT"),
+         
+         # This is obviously impossible
+         
          geo != "POINT(0 0)",
+         
+         # There are some data points in the WeiboScope data that is outside of
+         # possible bounds, causing runtime errors in Spark. We filter out those
+         # data.
+         
          between(longitude, 0, 180),
          between(latitude, -90, 90)) %>% 
   
@@ -320,15 +302,30 @@ WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>%
   mutate(weibo_geo_wkt = st_geomfromwkt(geo)) %>% 
   filter(!is.na(weibo_geo_wkt))
 
+# Registering the table in the Spark workplace and give it a name.
+
 sdf_register(WEIBOSCOPE_GEO_WKT, name = "WEIBOSCOPE_GEO_WKT")
+
+# Write the intermediate result to parquet format.
 
 spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_before_partition.parquet")
 
+# Now, because the previous steps involve filtering a significant chunk of data.
+# The original partition assigned by Spark is no longer optimal for future
+# operations. We would like to optimize this operations. Therefore, we first get
+# the number of partitions of the original Spark table. Then, comparing the rows
+# of the WEIBOSCOPE_ALL dataframe and geo filtered dataframe, we proportionally
+# reduce the number of partitions, which gives us a resulting partition of 35.
+
+sdf_num_partitions(WEIBOSCOPE_ALL)
+sdf_num_partitions(WEIBOSCOPE_GEO_WKT)
+sdf_nrow(WEIBOSCOPE_ALL)
+sdf_nrow(WEIBOSCOPE_GEO_WKT)
 WEIBOSCOPE_GEO_WKT <- sdf_repartition(WEIBOSCOPE_GEO_WKT, partitions = 35)
 
-spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_after_partition.parquet")
+# Write the intermediate result to parquet format.
 
-WEIBOSCOPE_GEO_WKT
+spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_after_partition.parquet")
 
 # Then, we need to transform the simplified Chinese map into a format that is
 # compatible to GeoSpark. To achieve this, we first convert it into a dataframe,
@@ -337,9 +334,13 @@ WEIBOSCOPE_GEO_WKT
 
 WEIBOSCOPE_GEO_WKT <- spark_read_parquet(sc, name = "weiboscope_geo_wkt", path = "spark_parquets/weiboscope_geo_after_partition.parquet/")
 
-CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
+CHN_GeoSpark_Map_df <- as_data_frame(CHN_2) %>% 
   mutate(chn_map_geom = st_as_text(geometry),
          geometry = NULL)
+
+# CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
+#   mutate(chn_map_geom = st_as_text(geometry),
+#          geometry = NULL)
 
 # Put the Chinese Map into Spark storage.
 
@@ -366,17 +367,33 @@ CHN_GeoSpark_Map
 
 geo_distribution <- st_join(CHN_GeoSpark_Map,
                   WEIBOSCOPE_GEO_WKT,
+                  
+                  # We use an sql operation provided by GeoSpark here. By using
+                  # st_contains, we are joining the rows in which the Weibo
+                  # posts location is located within a Chinese province.
+                  
                   join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
 
-sc_res <- st_join(CHN_GeoSpark_Map,
+# Registering the Spark table with a name in the Spark workspace.
+
+sdf_register(geo_distribution, name = "geo_distribution")
+
+# Write the intermediate results to parquet files.
+
+spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.parquet")
+
+# In this step, we hope to calculate the volume of Weibo posts in different
+# provinces across 2012.
+
+monthly_distribution <- st_join(CHN_GeoSpark_Map,
                   WEIBOSCOPE_GEO_WKT,
                   join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")) %>% 
   mutate(created_month = month(to_date(created_at))) %>% 
-  group_by(NAME_1, NL_NAME_1, ENGTYPE_1, created_month) %>%
+  group_by(NAME_1, created_month) %>%
   summarise(cnt = n()) %>% 
   collect()
 
-year_total_geo <- sc_res %>% 
+monthly_distribution <- monthly_distribution %>% 
   group_by(NAME_1) %>% 
   summarize(total_posts = sum(cnt)) %>% 
   full_join(CHN_simplified) %>% 
@@ -387,7 +404,6 @@ write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
 sdf_num_partitions(CHN_GeoSpark_Map)
 sdf_nrow(CHN_GeoSpark_Map)
 
-sdf_register(geo_distribution, name = "geo_distribution")
 
 tbl_cache(sc, "weiboscope_geo_wkt")
 
@@ -395,7 +411,6 @@ tbl_cache(sc, "chn_geospark_map")
 
 tbl_cache(sc)
 
-spark_write_parquet(geo_distribution, path = "~/Documents/gov-1005-projects/chinese-aqi-social-media-sentiment/spark_parquets/geo_distribution.parquet")
 
 # spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.parquet")
 

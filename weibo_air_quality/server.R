@@ -21,7 +21,7 @@ provDist <- read_rds("data/year_total_geo.rds")
 shinyServer(function(input, output) {
   
   output$privincialDistribution <- renderMapview(
-    mapview(year_total_geo, zcol = "total_posts",
+    mapview(provDist, zcol = "total_posts",
             layer.name = "Number of Posts")
   )
   
