@@ -23,3 +23,6 @@ datasets/weiboscope_data/*.csv
 # Sparklyr log directory and files
 logs/
 derby.log
+
+# Google API Json
+Transcription-675d1c2f9aef.json

@@ -1,12 +1,26 @@
+### Ruoqi Zhang
+
+I'm a first-year student at Harvard planning to concentrate in Mathematics & Philosophy. I enjoy data analytics using R/Python. I also [report](https://www.thecrimson.com/writer/1214694/Ruoqi__Zhang/) for The Harvard Crimson.
+
+If you'd like to reimplement this project, you can access my [Github repository here](https://github.com/rqzhang150/chinese-aqi-social-media-sentiment).
+
+If you'd like to chat about the project, you can contact me at `ruoqizhang [at] college.harvard.edu`.
+
 This project makes use of datasets generously released by researchers and developers of R packages, without which this Shiny application, in itself a testament of the vibrancy of R developer community, would not be possible. I would like to extend my thanks to the following scholars, researchers, and teams whose datasets form an essential part of this application.
 
 ### Weiboscope Open Data at Hong Kong University
 
 King-wa Fu, CH Chan, and Michael Chau's amazing Weiboscope Open Dataset provides an interesting glimpse into the dynamic of Chinese Internet and civil society at that time prior to intensified repressions in recent years. With millions rows of records totaling over 45 Gigabyte, he Weiboscope Open Dataset, which encompasses Weibo posts and their matadata in 2012 for Weibo users with a subscriber base larger than 1,000 people, is unparalleled in its detailed recording of information and its special attention on the issue of censorship. 
 
-To access their dataset, please visit https://hub.hku.hk/cris/dataset/dataset107483.
+Due to online censorship, Chinese Internet users are unable to access many sites that do not conform to government censorship requests or otherwise deemed sensitive. Those sites include widely used services including Twitter, Google, Facebook, Instagram, and Snapchat. Partially as a result of Chinese Internet users' limited access to foreign services, Weibo boasts a Monthly Active User based over 400 million and is widely regarded as one of the important barometer of China's public sentiment on social issues.
 
-**Usage in Project**
+The team published its 2012 dataset that contains over 200 million Weibo posts that fit the previous criteria. In the dataset, each week's data is published separately.
+
+Collected information include user's hashed id (`uid`), the platform used to publish the post (`source`),  whether the post contains image(s) (`image`), original text of the post (`text`), geospatial coordinate of the post (`geo`), and time of creation of the post (`created_at`).
+
+Additionally, as Weibo is required to conform with government's censorship requirements in sensitive issues. This dataset also tracks whether the post is deleted. Weibo displays posts that are censored in different ways: either saying that it's deleted (`deleted_last_seen`) or the user does not have permission to view the post (`permission_denied`).
+
+To access their dataset, please visit https://hub.hku.hk/cris/dataset/dataset107483.
 
 **Citation**
 
@@ -23,19 +37,22 @@ NASA's Moderate Resolution Imaging Spectroradiometer (MODIS), Multi-angle Imagin
 
 This project utilizes Global Annual PM2.5 Grids from MODIS, MISR and SeaWiFS Aerosol Optical Depth (AOD) with GWR, v1 (1998–2016) derived from the previous observations. Ranging from 1998 to 2016, the data, provided in GeoTiff format, present a coherent outlook into the trend of air pollution in China.
 
-**Usage in Project**
-
-* A Troubling Trend: Air Pollution in China Across the Years.
-
 **Citation**
 
 van Donkelaar, A., R. V. Martin, M. Brauer, N. C. Hsu, R. A. Kahn, R. C. Levy, A. Lyapustin, A. M. Sayer, and D. M. Winker. 2016. Global Estimates of Fine Particulate Matter Using a Combined Geophysical-Statistical Method with Information from Satellites. Environmental Science & Technology 50 (7): 3762-3772. https://doi.org/10.1021/acs.est.5b05833.
 
 ### Global Administrative Areas Dataset
 
-This project makes use of Global Administrative Areas (GADM) Dataset to assist in plotting out the boundaries between administrative entities and to categorize the longitude-latitude Weibo geo-location data into specific administrative areas. GADM dataset represents countries' actural control over territory. **The territory presented in the GADM dataset does not reflect this project's view on countries' sovereignty claims or territorial disputes.**
+This project makes use of Global Administrative Areas (GADM) Dataset to assist in plotting out the boundaries between administrative entities and to categorize the longitude-latitude Weibo geo-location data into specific administrative areas. GADM dataset represents countries' actural control over territory. **The territory presented in the GADM dataset does not reflect the author's view on countries' sovereignty claims or territorial disputes.**
 
 **Citation**
 
 Global Administrative Areas (2018). GADM database of Global Administrative Areas, version 3.6. [online] URL: www.gadm.org.
 
+### World Development Indicators, World Bank Group
+
+This project makes use of World Bank Group's World Development Indicator to explore China's economic growth and continued urbanization process.
+
+**Citation**
+
+World Bank Development Indicators by the World Bank Group. Data licensed under CC BY 4.0.

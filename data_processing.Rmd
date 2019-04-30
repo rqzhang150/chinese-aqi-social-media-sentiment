@@ -380,18 +380,16 @@ monthly_distribution <- monthly_distribution %>%
 
 write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
 
-sdf_num_partitions(CHN_GeoSpark_Map)
-sdf_nrow(CHN_GeoSpark_Map)
+year_total_geo <- read_rds("weibo_air_quality/data/year_total_geo.rds")
 
+str_split("安徽|安徽", pattern = fixed("|"))
 
-tbl_cache(sc, "weiboscope_geo_wkt")
+as.character(map_chr(str_split("安徽|安徽", pattern = fixed("|")), c(2)))
 
-tbl_cache(sc, "chn_geospark_map")
+year_total_geo %>% 
+  mutate(Name = NAME_1,
+         `Name in Chinese` = NL_NAME_1)
 
-tbl_cache(sc)
-
-
-# spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.parquet")
 
 geo_time_count <- geo_distribution %>% 
   mutate(created_month = month(to_date(created_at))) %>% 
@@ -497,12 +495,16 @@ frequency <- read_rds("weibo_air_quality/data/keywords_freq_dist.rds")
 # }
 
 frequency %>% 
-  mutate(filter_keyword = factor(filter_keyword, 
+  mutate(filter_keyword = factor(filter_keyword,
                                  levels = c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩"),
-                                 labels = c("Huan Bao", "Huan Jing Bao Hu", "Kong Qi Zhi Liang",
-                                            "Wu Mai", "PM2.5", "Mai", "Wu Ran", "Kou Zhao"))) %>% 
+                                 labels = c("环保 (Environmental Protection)", "环境保护 (Environmental Protection)",
+                                            "空气质量 (Air Quality)", "雾霾 (Smog)", "PM2.5", "霾 (Smog)", 
+                                            "污染 (Pollution)", "口罩 (Facemask)"))) %>%
   ggplot(aes(x = created_date, y = post_created, color = filter_keyword)) +
-    geom_line()
+    geom_line() +
+    theme_minimal() +
+    theme(legend.text=element_text(family="STKaiti")) +
+    
 
 
 ```
@@ -592,7 +594,7 @@ selected_indicators <- c("GDP (current US$)", "Poverty headcount ratio at $1.90 
 cleaned_indicators <- indicators %>% 
   filter(series_name %in% selected_indicators) %>% 
   gather(key = "year", value = "value", x1960_yr1960:x2017_yr2017) %>% 
-  select(-country_name, -country_code, -x2018_yr2018, -series_code) %>% 
+  dplyr::select(-country_name, -country_code, -x2018_yr2018, -series_code) %>% 
   mutate(year = map_chr(str_split(year, pattern = "_"), c(1)),
          year = as.integer(str_remove(year, "x")))
 
@@ -638,6 +640,16 @@ cleaned_indicators %>%
                        labels = paste0(seq(0, 100, by = 10),"%")) +
     scale_x_continuous(breaks = seq(1960, 2017, by = 5))
 
+```
+
+```{r}
+library(googleLanguageR)
+gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")
+censored <- read_rds("weibo_air_quality/data/permission_denied_all.rds")
+sample_n(censored, 1) %>% 
+  dplyr::select(text) %>% 
+  pull() %>% 
+  gl_translate(target = "en")
 
 ```
 

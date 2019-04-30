@@ -7,18 +7,63 @@
 #    http://shiny.rstudio.com/
 #
 
+library(mapview)
 library(shiny)
-library(tidyverse)
 library(markdown)
 library(lubridate)
 library(shinythemes)
 library(markdown)
+library(tidyverse)
+library(DT)
+library(googleLanguageR)
+gl_auth("Transcription-675d1c2f9aef.json")
+
 
 china_gdp <- read_rds("data/china_gdp.rds")
 development_indicators <- read_rds("data/development_indicators.rds")
 provDist <- read_rds("data/year_total_geo.rds")
+keywords_freq_dist <- read_rds("data/keywords_freq_dist.rds")
+permission_denied_all <- read_rds("data/permission_denied_all.rds")
 
 shinyServer(function(input, output) {
+  
+  observe({   
+    if(input$shuffle > 0) {
+      output$censoredExamples <- renderDT(
+        sample_n(permission_denied_all, 1) %>% 
+          dplyr::select(text) %>% 
+          pull() %>% 
+          gl_translate(target = "en") %>% 
+          mutate(`Original Text` = text,
+                 `Translated Text (Google)` = translatedText) %>% 
+          dplyr::select(`Original Text`, `Translated Text (Google)`)
+      )
+    }
+  })
+
+  output$keywordsFreqDist <- renderPlot(
+    keywords_freq_dist %>% 
+      filter(between(created_date, input$keywordTime[1], input$keywordTime[2]),
+             filter_keyword %in% input$keywordSelected) %>% 
+      mutate(filter_keyword = factor(filter_keyword,
+                                     levels = c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩"),
+                                     labels = c("环保 (Environmental Protection)", "环境保护 (Environmental Protection)",
+                                                "空气质量 (Air Quality)", "雾霾 (Smog)", "PM2.5", "霾 (Smog)", 
+                                                "污染 (Pollution)", "口罩 (Facemask)"))) %>%
+      ggplot(aes(x = created_date, y = post_created, color = filter_keyword)) +
+        geom_line() +
+        theme_minimal() +
+        theme(plot.title = element_text(family = "Georgia",
+                                        size = 20),
+              plot.subtitle = element_text(size = 15),
+              legend.text = element_text(family="STKaiti"),
+              legend.position = "bottom") +
+        labs(x = NULL,
+             y = "Number of Posts",
+             title = "Number of Weibo Posts That Mention Certain Keywords",
+             caption = "Source: WeiboScope Open Data/Hong Kong University",
+             color = "Keywords")
+  )
   
   output$privincialDistribution <- renderMapview(
     mapview(provDist, zcol = "total_posts",
@@ -42,10 +87,6 @@ shinyServer(function(input, output) {
     creation_time_dist <- read_rds("data/creation_time_dist.rds")
 
     # Draw the plot based on the imported RDS file. 
-    # 
-    # TODO: 
-    # (1) Implement sidebar that allows users to adjust the range date displayed.
-    # (2) Change y scale break formatting
     creation_time_dist %>% 
       filter(created_date >= input$creationTimeDate[1] &
                created_date <= input$creationTimeDate[2]) %>% 
@@ -55,12 +96,11 @@ shinyServer(function(input, output) {
         theme(plot.title = element_text(family = "Georgia",
                                       size = 20),
               plot.subtitle = element_text(size = 15)) +
-      
         scale_y_continuous() +
         labs(x = NULL,
              y = "Number of Weibo Post Per Day",
              title = paste("Weibo Posts Created by Users with Subscription Base Larger Than 1,000"),
-             subtitle = paste("Per day. Available data between", (creation_time_dist %>% arrange(created_date) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")), "and", (creation_time_dist %>% arrange(desc(created_date)) %>% head(1) %>% select(created_date) %>% pull() %>% format(format = "%B %d, %Y")),".")
+             subtitle = paste("Per day. Available data between", (creation_time_dist %>% arrange(created_date) %>% head(1) %>% dplyr::select(created_date) %>% pull() %>% format(format = "%B %d, %Y")), "and", (creation_time_dist %>% arrange(desc(created_date)) %>% head(1) %>% dplyr::select(created_date) %>% pull() %>% format(format = "%B %d, %Y")),".")
              )
   })
   
@@ -86,9 +126,9 @@ shinyServer(function(input, output) {
   output$urbanizationPlot <- renderPlot({
     development_indicators %>% 
       filter(between(year, input$urbanization_year[1], input$urbanization_year[2])) %>% 
-      filter(series_name == "Urban population (% of total)") %>% 
+      filter(series_name %in% c("Urban population (% of total)") ) %>% 
       mutate(value = as.numeric(value)) %>% 
-      ggplot(aes(x = year, y = value)) +
+      ggplot(aes(x = year, y = value, color = series_name)) +
       geom_line() +
       geom_point(size = 0.5) +
       theme_minimal() +
