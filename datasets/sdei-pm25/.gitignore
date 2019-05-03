@@ -1,0 +1,6 @@
+# GEOTiff files are too large to upload to Github. 
+# Ignore all files in this directory
+*
+
+# Other than the .gitignore file
+!.gitignore
