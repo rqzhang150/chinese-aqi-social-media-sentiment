@@ -1,13 +1,9 @@
----
-title: "Data Processing"
-author: "Ruoqi Zhang"
-output:
-  html_document:
-    df_print: paged
----
+# This file utilizes Spark, Sparklyr, and GeoSpark to read and process datasets,
+# combine them into intermediate results and export them into RDS format files
+# for other helper files to process.
 
-```{r setup, include=TRUE}
-knitr::opts_chunk$set(cache=TRUE)
+# Libraries --------------------------------------------------------------------
+
 library(sf)
 library(tidyverse)
 library(gt)
@@ -24,17 +20,9 @@ library(stringr)
 library(gganimate)
 library(janitor)
 
-# For processing GEOTiff files and generating PM2.5 Map.
 
-library(raster)
-library(rasterVis)
-library(rgdal)
-library(maps)
-library(mapdata)
-library(maptools)
-```
 
-```{r sparklyr_setup, include=TRUE}
+# Spark Setup ------------------------------------------------------------------
 
 # Set environment variable for JDK 1.8 in order to point sparklyr package to the
 # correct directory.
@@ -70,11 +58,9 @@ sc <- spark_connect(master = "local",
 
 register_gis(sc)
 
-```
 
-# Time Distribution in Week 1
 
-```{r data_proc}
+# WeiboScope Load ------------------------------------------------------
 
 # Time the loading time for the csv files.
 
@@ -87,33 +73,33 @@ tic("weiboscope_load_full")
 # dataframes that contains manageable metadata, and visualize it using ggplot.
 
 WEIBOSCOPE_ALL <- spark_read_csv(sc,
-  name = "weiboscope", 
-  
-  # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
-  # Using wildcard, we read in all the data in that directory. Because
-  # Weiboscope data already contains timestamp of the posts, we do not worry
-  # about the filename.
-  
-  path = "datasets/weiboscope_data/*.csv",
-  
-  # Specifying the column types manually without letting Spark infering the
-  # column types. The following column types are not specified under R coltypes,
-  # but instead uses Spark SQL format.
-  
-  infer_schema = FALSE,
-  columns = list(
-    mid = "character",
-    retweeted_status_mid = "character",
-    uid = "character",
-    retweeted_uid = "character",
-    source = "character",
-    image = "integer",
-    text = "character",
-    geo = "character",
-    created_at = "timestamp",
-    deleted_last_seen = "timestamp",
-    permission_denied = "boolean"
-  )
+                                 name = "weiboscope", 
+                                 
+                                 # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
+                                 # Using wildcard, we read in all the data in that directory. Because
+                                 # Weiboscope data already contains timestamp of the posts, we do not worry
+                                 # about the filename.
+                                 
+                                 path = "datasets/weiboscope_data/*.csv",
+                                 
+                                 # Specifying the column types manually without letting Spark infering the
+                                 # column types. The following column types are not specified under R coltypes,
+                                 # but instead uses Spark SQL format.
+                                 
+                                 infer_schema = FALSE,
+                                 columns = list(
+                                   mid = "character",
+                                   retweeted_status_mid = "character",
+                                   uid = "character",
+                                   retweeted_uid = "character",
+                                   source = "character",
+                                   image = "integer",
+                                   text = "character",
+                                   geo = "character",
+                                   created_at = "timestamp",
+                                   deleted_last_seen = "timestamp",
+                                   permission_denied = "boolean"
+                                 )
 )
 toc()
 
@@ -129,44 +115,9 @@ spark_write_parquet(WEIBOSCOPE_ALL, "spark_parquets/weiboscope_all_before_partit
 
 WEIBOSCOPE_ALL <- spark_read_parquet(sc, name = "weiboscope", path = "spark_parquets/weiboscope_all.parquet/")
 
-# This chunk of code is for small-scale testing of WeiboScope Open data in
-# Spark. Preserved for later use.
 
-# tic("weiboscope_load_test")
-# WEIBOSCOPE_TEST <- spark_read_csv(sc,
-#   name = "weiboscope_test", 
-#   
-#   # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
-#   # Using wildcard, we read in all the data in that directory. Because
-#   # Weiboscope data already contains timestamp of the posts, we do not worry
-#   # about the filename.
-#   
-#   path = "datasets/weiboscope_data/week4.csv",
-#   
-#   # Specifying the column types manually without letting Spark infering the
-#   # column types. The following column types are not specified under R coltypes,
-#   # but instead uses Spark SQL format.
-#   
-#   infer_schema = FALSE,
-#   columns = list(
-#     mid = "character",
-#     retweeted_status_mid = "character",
-#     uid = "character",
-#     retweeted_uid = "character",
-#     source = "character",
-#     image = "integer",
-#     text = "character",
-#     geo = "character",
-#     created_at = "timestamp",
-#     deleted_last_seen = "timestamp",
-#     permission_denied = "boolean"
-#   )
-# )
-# toc()
 
-```
-
-```{r creation_time_dist}
+# RDS: Weibo Posting Time Distribution ------------------------------------------
 
 # Using all WeiboScope data in Spark environment, we hope to calculate how many
 # posts are posted everyday in 2012.
@@ -196,11 +147,9 @@ toc()
 # our result into an RDS file for our Shiny app to use.
 
 write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
-```
 
-# Spatial Data In China
 
-```{r china_provincial_map}
+# Geo Boundary Loading --------------------------------------------------
 
 # We use GADM Global Topolotical dataset to plot out the provincial level map of
 # China. However, due to the size of the map (~10M), plotting the original
@@ -210,8 +159,8 @@ write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
   st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
 
-# We load the 
-  
+# We load the city level administrative map of China.
+
 CHN_2 <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds")
 
 # This reduced the size of the map, and makes it more mamagable to print. To
@@ -226,11 +175,14 @@ mapview(CHN_simplified)
 
 mapview(year_total_geo, zcol = "total_posts",
         layer.name = "Number of Posts",
+        
+        # We view the map in an external browser.
+        
         viewer.suppress = TRUE)
 
-```
 
-```{r weibo_geo_dist}
+
+# RDS: Weibo Geographical Distribution -------------------------------------
 
 # WeiboScope Open's Geographical data is coded as character in the format of
 # "POINT(0 0)". We would like to import this into our Spark environment for
@@ -311,7 +263,7 @@ spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_after_par
 
 WEIBOSCOPE_GEO_WKT <- spark_read_parquet(sc, name = "weiboscope_geo_wkt", path = "spark_parquets/weiboscope_geo_after_partition.parquet/")
 
-CHN_GeoSpark_Map_df <- as_data_frame(CHN_2) %>% 
+CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
   mutate(chn_map_geom = st_as_text(geometry),
          geometry = NULL)
 
@@ -343,13 +295,13 @@ CHN_GeoSpark_Map
 # for further data wrangling and analysis.
 
 geo_distribution <- st_join(CHN_GeoSpark_Map,
-                  WEIBOSCOPE_GEO_WKT,
-                  
-                  # We use an sql operation provided by GeoSpark here. By using
-                  # st_contains, we are joining the rows in which the Weibo
-                  # posts location is located within a Chinese province.
-                  
-                  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+                            WEIBOSCOPE_GEO_WKT,
+                            
+                            # We use an sql operation provided by GeoSpark here. By using
+                            # st_contains, we are joining the rows in which the Weibo
+                            # posts location is located within a Chinese province.
+                            
+                            join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
 
 # Registering the Spark table with a name in the Spark workspace.
 
@@ -363,8 +315,8 @@ spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.pa
 # provinces across 2012.
 
 monthly_distribution <- st_join(CHN_GeoSpark_Map,
-                  WEIBOSCOPE_GEO_WKT,
-                  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")) %>% 
+                                WEIBOSCOPE_GEO_WKT,
+                                join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")) %>% 
   mutate(created_month = month(to_date(created_at))) %>% 
   group_by(NAME_1, created_month) %>%
   summarise(cnt = n()) %>% 
@@ -379,143 +331,3 @@ year_total_geo <- monthly_distribution %>%
 write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
 
 year_total_geo <- read_rds("weibo_air_quality/data/year_total_geo.rds")
-
-str_split("安徽|安徽", pattern = fixed("|"))
-
-as.character(map_chr(str_split("安徽|安徽", pattern = fixed("|")), c(2)))
-
-year_total_geo %>% 
-  mutate(Name = NAME_1,
-         `Name in Chinese` = NL_NAME_1)
-
-
-geo_time_count <- geo_distribution %>% 
-  mutate(created_month = month(to_date(created_at))) %>% 
-  group_by(NAME_1, NL_NAME_1, ENGTYPE_1, created_month) %>%
-  summarise(cnt = n()) %>% 
-  collect()
-
-censored_geo_post <- geo_distribution %>% 
-  filter(!is.na(permission_denied)) %>% 
-  collect()
-
-```
-
-# Censorship Frequency
-
-```{r}
-
-permission_denied_dist <- WEIBOSCOPE_ALL %>% 
-  filter(!is.na(permission_denied)) %>% 
-  mutate(created_date = to_date(created_at)) %>% 
-  group_by(created_date) %>% 
-  summarize(deleted_count = n()) %>% 
-  collect()
-
-write_rds(permission_denied_dist, "weibo_air_quality/data/permission_denied_dist.rds")
-
-permission_denied_dist <- read_rds("weibo_air_quality/data/permission_denied_dist.rds")
-
-censorship_dist_plot <- permission_denied_dist %>% 
-  ggplot(aes(x = created_date, y = deleted_count)) +
-    geom_line(color = "#d11141") +
-    transition_reveal(created_date) +
-    theme_minimal() +
-    labs(title = "",
-         x = NULL,
-         y = "Number of Monitored Censored Posts",
-         caption = "Source: Open WeiboScope/Hong Kong University") +
-    theme(panel.grid.minor = element_blank())
-
-animate(censorship_dist_plot, 
-        nframes = 365,
-        fps = 30,
-        duration = 8,
-        end_pause = 150,
-        width = 1000,
-        height = 500)
-
-anim_save("weibo_air_quality/censorship_dist_plot.gif", animation = censorship_dist_plot,
-          nframes = 365,
-          fps = 30,
-          duration = 10,
-          end_pause = 150,
-          width = 800,
-          height = 400)
-
-
-permission_denied_all <- WEIBOSCOPE_ALL %>% 
-  filter(!is.na(permission_denied)) %>% 
-  collect()
-
-write_rds(permission_denied_all, "weibo_air_quality/data/permission_denied_all.rds")
-
-
-permission_denied_dist
-
-
-```
-
-
-# Keyword Frequency
-
-```{r}
-
-keywords <- c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩")
-
-frequency <- tibble(filter_keyword = character(),
-                    created_date = date(),
-                    post_created = integer())
-
-for (keyword in keywords) {
-  WEIBOSCOPE_ALL %>% 
-    filter(str_detect(text, keyword)) %>% 
-    mutate(created_date = to_date(created_at),
-           filter_keyword = keyword) %>% 
-    group_by(filter_keyword, created_date) %>% 
-    summarize(post_created = n()) %>% 
-    collect() %>% 
-    bind_rows(frequency) -> frequency
-}
-
-write_rds(frequency, "weibo_air_quality/data/keywords_freq_dist.rds")
-
-frequency <- read_rds("weibo_air_quality/data/keywords_freq_dist.rds")
-
-# for (keyword in keywords) {
-#   week1 %>% 
-#     filter(str_detect(text, keyword)) %>% 
-#     mutate(created_date = as_date(created_at),
-#            filter_keyword = keyword) %>% 
-#     group_by(filter_keyword, created_date) %>% 
-#     summarize(post_created = n()) %>% 
-#     bind_rows(frequency) -> frequency
-# }
-
-frequency %>% 
-  mutate(filter_keyword = factor(filter_keyword,
-                                 levels = c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩"),
-                                 labels = c("环保 (Environmental Protection)", "环境保护 (Environmental Protection)",
-                                            "空气质量 (Air Quality)", "雾霾 (Smog)", "PM2.5", "霾 (Smog)", 
-                                            "污染 (Pollution)", "口罩 (Facemask)"))) %>%
-  ggplot(aes(x = created_date, y = post_created, color = filter_keyword)) +
-    geom_line() +
-    theme_minimal() +
-    theme(legend.text=element_text(family="STKaiti")) +
-    
-
-
-```
-
-
-```{r censored_post_translation}
-library(googleLanguageR)
-gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")
-censored <- read_rds("weibo_air_quality/data/permission_denied_all.rds")
-sample_n(censored, 1) %>% 
-  dplyr::select(text) %>% 
-  pull() %>% 
-  gl_translate(target = "en")
-
-```
-
