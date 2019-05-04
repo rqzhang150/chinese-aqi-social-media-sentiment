@@ -19,6 +19,8 @@ library(geospark)
 library(stringr)
 library(gganimate)
 library(janitor)
+library(googleLanguageR)
+gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")
 
 
 
@@ -48,6 +50,8 @@ conf$spark.memory.fraction <- 0.9
 
 conf$spark.serializer <- "org.apache.spark.serializer.KryoSerializer"
 conf$spark.kryo.registrator <- "org.datasyslab.geospark.serde.GeoSparkKryoRegistrator"
+conf$spark.kryoserializer.buffer.max <- "1G"
+conf$spark.driver.maxResultSize <- "3G"
 
 # Connect to local Spark instance.
 
@@ -331,3 +335,86 @@ year_total_geo <- monthly_distribution %>%
 write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
 
 year_total_geo <- read_rds("weibo_air_quality/data/year_total_geo.rds")
+
+# Select City Posts Filtering ---------------------------------------------
+
+CHN_Select_City_Simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds") %>% 
+  st_simplify(preserveTopology = TRUE, dTolerance = 0.01) %>% 
+  dplyr::filter(NAME_2 %in% c("Beijing", "Guangzhou", "Shenzhen", "Shanghai"))
+
+CHN_Select_City_Simplified <- as_data_frame(CHN_Select_City_Simplified) %>% 
+  mutate(chn_map_geom = st_as_text(geometry),
+         geometry = NULL)
+
+CHN_Select_City_Simplified_spark <- copy_to(sc, CHN_Select_City_Simplified)
+
+CHN_Select_City_Simplified <- mutate(CHN_Select_City_Simplified_spark, chn_geo_wkt = st_geomfromwkt(chn_map_geom))
+
+select_city_posts <- st_join(CHN_Select_City_Simplified,
+                             WEIBOSCOPE_GEO_WKT,
+                            
+                             # We use an sql operation provided by GeoSpark here. By using
+                             # st_contains, we are joining the rows in which the Weibo
+                             # posts location is located within a Chinese province.
+                            
+                             join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+
+sdf_register(select_city_posts, name = "select_city_posts")
+
+spark_write_parquet(select_city_posts, path = "spark_parquets/select_city_posts.parquet")
+
+select_city_posts <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/")
+
+### I have no RAM to do this, what a sad story.
+# select_city_posts_df <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/") %>% 
+#   collect()
+# 
+# write_rds(select_city_posts_df, "weibo_air_quality/data/select_city_posts.rds")
+
+sample_posts <- select_city_posts %>% 
+  mutate(created_date = to_date(created_at)) %>% 
+  filter(length(text) >= 10) %>% 
+  sdf_sample(fraction = 0.0001) %>% 
+  collect()
+
+with_sentiment <- sample_posts %>% 
+  rowwise() %>% 
+  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
+
+with_sentiment %>% 
+  select(text, sentiment) %>% 
+  View()
+
+# sample_return <- gl_nlp("[馋嘴]獨自旳宵夜 我在:http://t.cn/zWsKds0", nlp_type = "analyzeSentiment")
+# 
+# sample_return$documentSentiment$score
+# 
+# nested_samples <- sample_posts %>% 
+#   group_by(text) %>% 
+#   nest()
+# 
+# mapped_samples <- map(nested_samples$text, gl_nlp, nlp_type = "analyzeSentiment")
+# 
+# bind_rows(mapped_samples)
+# 
+# map(mapped_samples, `[`, "documentSentiment") %>% 
+#   bind_rows()
+# 
+# split_samples <- sample_posts %>% 
+#   split(.$text) %>% 
+#   map(gl_nlp(.x,
+#              nlp_type = "analyzeSentiment"))
+# 
+# map(sample_posts, gl_nlp)
+# 
+# sample_posts %>% 
+#   slice(16) %>% 
+#   mutate(len = length(text))
+# 
+# gl_nlp("[馋嘴]獨自旳宵夜 我在:http://t.cn/zWsKds0",
+#        nlp_type = "analyzeSentiment")
+#   
+# mapview(CHN_Select_City_Simplified)
+
+
+  
