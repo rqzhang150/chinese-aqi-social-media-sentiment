@@ -22,7 +22,13 @@ library(janitor)
 library(googleLanguageR)
 gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")
 
+library(doParallel)
+library(foreach)
 
+# install.packages("devtools")
+# devtools::install_github("hadley/multidplyr")
+
+library(multidplyr)
 
 # Spark Setup ------------------------------------------------------------------
 
@@ -365,17 +371,98 @@ spark_write_parquet(select_city_posts, path = "spark_parquets/select_city_posts.
 
 select_city_posts <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/")
 
+select_city_posts_df <- select_city_posts %>% 
+  dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% 
+  collect() 
+
+# n <- 20000
+# nr <- nrow(select_city_posts_df)
+# split_select_city_posts_df <- split(select_city_posts_df, rep(1:ceiling(nr/n), each=n, length.out=nr))
+
+select_city_sentiment <- select_city_posts_df %>% 
+  rowwise() %>% 
+  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
+
+
+# SADLY THIS ALSO WOULD NOT SPEED UP THE FUNCTION BECAUSE OF GOOGLE'S API USAGE QUOTA
+# # doParallel Setup
+# 
+# no_cores <- detectCores() - 1  
+# registerDoParallel(cores=no_cores)  
+# 
+# # Multidplyr Setup
+# 
+# cluster <- create_cluster(3)
+# set_default_cluster(cluster)
+# cluster_library(cluster, "tidyverse")
+# cluster_library(cluster, "lubridate")
+# cluster_library(cluster, "googleLanguageR")
+# 
+# 
+# evaluate_sentiment <- function(text, ...) {
+#   val <-  gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score
+#   return(val)
+# }
+# 
+# cluster_assign_value(cluster, 'evaluate_sentiment', evaluate_sentiment)
+# cluster_assign_value(cluster, 'gl_nlp', gl_nlp)
+# cluster_eval_(cluster, quote(gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")))
+# 
+# sample %>% 
+#   mutate(sentiment = mapply(evaluate_sentiment, text))
+# 
+# select_city_sentiment <- select_city_posts_df %>% 
+#   partition(cluster = cluster) %>% 
+#   mutate(sentiment = mapply(evaluate_sentiment, text))
+
+
+
+# spark_write_csv(select_city_posts %>% dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% sdf_coalesce(partitions = 1), path = "spark_parquets/select_city_posts_coalesced.csv")
+# 
+# sdf_schema(select_city_posts)
+
 ### I have no RAM to do this, what a sad story.
 # select_city_posts_df <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/") %>% 
 #   collect()
 # 
 # write_rds(select_city_posts_df, "weibo_air_quality/data/select_city_posts.rds")
 
-sample_posts <- select_city_posts %>% 
+# select_city_posts_csv <- read_csv("spark_parquets/select_city_posts_coalesced.csv/part-00000-88a13204-2bb0-4177-bdb6-2ea6af0b6c2f-c000.csv",
+#                                   col_types = cols(
+#                                     .default = col_character(),
+#                                     CC_2 = col_character(),
+#                                     HASC_2 = col_character(),
+#                                     retweeted_status_mid = col_character(),
+#                                     retweeted_uid = col_character(),
+#                                     image = col_logical(),
+#                                     created_at = col_datetime(format = ""),
+#                                     deleted_last_seen = col_datetime(format = ""),
+#                                     permission_denied = col_logical(),
+#                                     longitude = col_double(),
+#                                     latitude = col_double()
+#                                   )
+# )
+
+
+# shenzhen_posts <- select_city_posts %>% 
+#   mutate(created_date = to_date(created_at)) %>% 
+#   filter(length(text) >= 10) %>% 
+#   filter(NAME_2 == "Shenzhen") %>% 
+#   collect()
+
+with_sentiment <- sample_posts %>% 
+  mutate(sentiment = mapply(evaluate_sentiment, text))
+
+sample_posts_spark <- select_city_posts %>% 
   mutate(created_date = to_date(created_at)) %>% 
   filter(length(text) >= 10) %>% 
-  sdf_sample(fraction = 0.0001) %>% 
-  collect()
+  sdf_sample(fraction = 0.0001)
+
+# spark_apply(x = sample_posts_spark,
+#             f = function(e) do(e$text, evaluate_sentiment))
+
+
+
 
 with_sentiment <- sample_posts %>% 
   rowwise() %>% 
@@ -400,10 +487,10 @@ with_sentiment %>%
 # map(mapped_samples, `[`, "documentSentiment") %>% 
 #   bind_rows()
 # 
-# split_samples <- sample_posts %>% 
-#   split(.$text) %>% 
-#   map(gl_nlp(.x,
-#              nlp_type = "analyzeSentiment"))
+split_samples <- sample_posts %>%
+  split(.$text) %>%
+  map(gl_nlp(text,
+             nlp_type = "analyzeSentiment"))
 # 
 # map(sample_posts, gl_nlp)
 # 
