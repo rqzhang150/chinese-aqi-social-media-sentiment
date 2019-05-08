@@ -1,9 +1,9 @@
-# Air Quality and Social Media Sentiment in China
+# Settling the Dust: Air Pollution & Public Opinion in China, 2012
 
 ![Smog in Beijing, China](https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg)
 Smog in Beijing, China. By *Lei Han* on [Flickr](https://www.flickr.com/photos/sunsetnoir/23424745665/in/photostream/). Licensed under [CC BY-NC-ND 2.0](https://creativecommons.org/licenses/by-nc-nd/2.0/).
 
-## Description
+## About
 
 Exploratory data analysis between Air Quality-related data and social media (Weibo) sentiment data in 2012. Final project for Harvard College GOV 1005: Data
 
@@ -13,7 +13,7 @@ If you'd like to chat about the project, you can contact me at `ruoqizhang [at] 
 
 To run this project, other than the packages listed in the helper files, you would also need to install `Apache Spark` and `Geospark` on your environment. They enable us to do data processing on large datasets like Weiboscope Open Dataset.
 
-Due to the size of the dataset, SDEI PM2.5 and Weiboscope are not included in the repository. For how the two datasets are set up in this project, read this project's README files for [SDEI PM2.5 Dataset](datasets/sdei-pm25/README.md), and [Weiboscope Open Dataset](datasets/weiboscope_data/README.md)
+Due to the size of the dataset, SDEI PM2.5 and Weiboscope are not included in the repository. For how the two datasets are set up in this project, read this project's README files for [SDEI PM2.5 Dataset](datasets/sdei-pm25/README.md), and [Weiboscope Open Dataset](datasets/weiboscope_data/README.md). For intermediary results, I recommend that you save them in parquet format.
 
 ## Acknowledgements
 
