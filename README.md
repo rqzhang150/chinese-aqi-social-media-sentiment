@@ -11,39 +11,9 @@ If you'd like to chat about the project, you can contact me at `ruoqizhang [at] 
 
 ## Getting Started
 
-The repository comprises two components: a data processing component and a Shiny webapp to demonstrate the findings of the data analysis. The diretory tree is listed below: 
+To run this project, other than the packages listed in the helper files, you would also need to install `Apache Spark` and `Geospark` on your environment. They enable us to do data processing on large datasets like Weiboscope Open Dataset.
 
-```
-.
-├── README.md
-├── data_processing.Rmd
-├── datasets
-│   ├── exploratory_analysis.Rmd
-│   ├── World_Development_Indicators
-│   ├── gadm36_rds
-│   ├── sdei-pm25
-│   └── weiboscope_data
-├── final-project-critique
-└── weibo_air_quality
-    ├── about.md
-    ├── acknowledgement.md
-    ├── data
-    │   ├── china_gdp.rds
-    │   ├── creation_time_dist.rds
-    │   ├── development_indicators.rds
-    │   ├── keywords_freq_dist.rds
-    │   ├── permission_denied_all.rds
-    │   └── permission_denied_dist.rds
-    ├── pm25_graphs
-    ├── server.R
-    ├── ui.R
-    └── www
-        ├── about_header.html
-        ├── bgimg.jpg
-        ├── censorship_dist_plot.gif
-        ├── demo.html
-        └── style.css
-```
+Due to the size of the dataset, SDEI PM2.5 and Weiboscope are not included in the repository. For how the two datasets are set up in this project, read this project's README files for [SDEI PM2.5 Dataset](datasets/sdei-pm25/README.md), and [Weiboscope Open Dataset](datasets/weiboscope_data/README.md)
 
 ## Acknowledgements
 
