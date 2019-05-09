@@ -22,14 +22,6 @@ library(janitor)
 library(googleLanguageR)
 gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")
 
-library(doParallel)
-library(foreach)
-
-# install.packages("devtools")
-# devtools::install_github("hadley/multidplyr")
-
-library(multidplyr)
-
 # Spark Setup ------------------------------------------------------------------
 
 # Set environment variable for JDK 1.8 in order to point sparklyr package to the
@@ -369,11 +361,17 @@ sdf_register(select_city_posts, name = "select_city_posts")
 
 spark_write_parquet(select_city_posts, path = "spark_parquets/select_city_posts.parquet")
 
+# RDS: Posts in Shenzhen, Guangzhou, Shanghai, Beijing ---------------------------------
+
 select_city_posts <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/")
 
 select_city_posts_df <- select_city_posts %>% 
   dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% 
   collect() 
+
+write_rds(select_city_posts_df, "sentiment_analysis/select_city_posts_df.rds")
+
+# Some test code
 
 shenzhen <- select_city_posts_df %>% 
   filter(NAME_2 == "Shenzhen")
