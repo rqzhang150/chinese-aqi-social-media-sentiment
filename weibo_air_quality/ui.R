@@ -10,7 +10,6 @@
 library(mapview)
 library(shiny)
 library(tidyverse)
-library(markdown)
 library(lubridate)
 library(shinythemes)
 library(markdown)
@@ -30,16 +29,31 @@ shinyUI(fluidPage(
     title = "Settling The Dust",
     tabPanel(
       title = "Pollution: A Legitimacy Issue",
-      includeHTML("www/about_header.html"),
+      
+      # Include the global CSS file for the formatting of the entire Shiny
+      # application.
+      
       includeCSS("www/style.css"),
+      
+      # Import the graphic title header for the first page.
+      
+      includeHTML("www/about_header.html"),
+      
+      # Source note for the picture used in the HTML file.
+      
       tags$p(class = "source-note", style = "text-align: right;", "Tiananmen Square under Smog. By Lei Han on Flickr. Image licensed under CC BY-NC-ND 2.0."),
       
+# SECTION 1: POLLUTION: A LEGITIMACY ISSUE ------------------------------
       
+      # Write-up for the first section. Uses CSS class firstcharacter to drop
+      # the first character and create better visual effects. Uses fluidRow, and
+      # configure column so that the text area does not occupy the entire
+      # screen, creating a visual effect closer to a newspaper website.
+
       fluidRow(
         column(width = 3),
         column(width = 6,
                tags$h2("Pollution: A Legitimacy Issue"),
-
                tags$p(tags$span("T",class = "firstcharacter"), "hree hundred million. That is the number of Chinese people who had watched ", tags$i("Under the Done"),", a documentary on air pollution produced by a former investigative journalist. Despite the documentary, viewed by more than a quarter of China’s population, had been erased of all its traces on the Internet seven days after its release, it had seared one word into the collective consciousness of the Chinese populace."),
                tags$p(tags$b('"Smog."')),
                tags$p("Comprising industrial emissions and organic compounds, severe smog can dramatically hinder visibility, and the particulate matters (PM2.5) in the highly polluted air can penetrate even into the circulatory system."),
@@ -47,6 +61,8 @@ shinyUI(fluidPage(
                ),
         column(width = 3)
       ),
+
+      # PM2.5 Over Time Graph
       
       fluidRow(
         column(width = 1),
@@ -170,6 +186,8 @@ shinyUI(fluidPage(
         column(width = 3)
       )
     ),
+
+# SECTION 2: WOES OF DEVELOPMENT ------------------------------------
     
     tabPanel(
       title = "Woes of Development",
@@ -258,12 +276,10 @@ shinyUI(fluidPage(
       ),
       column(width = 3)
     )
-    
-      
-      
-      
     ),
-    
+
+# SECTION 3: BAD AIR, BAD DAY? -----------------------------------------
+
     tabPanel(
       title = "Bad Air, Bad Day?",
       fluidRow(
@@ -295,6 +311,7 @@ shinyUI(fluidPage(
       
     ),
     
+# SECTION 4: "PERMISSION DENIED" -------------------------------------
     
     tabPanel(
       title = '"Permission Denied"',
@@ -339,18 +356,16 @@ shinyUI(fluidPage(
         ),
         column(width = 2)
       )
-      
-      
-      
     ),
     
+# SECTION 5: ABOUT --------------------------------------------------
+
     tabPanel(
       title = "About",
       fluidPage(
         column(width = 3),
         column(width = 6,
-               includeMarkdown("acknowledgement.md")
-               # includeMarkdown("about.md")
+               includeMarkdown("www/acknowledgement.md")
         ),
         column(width = 3)
       )
