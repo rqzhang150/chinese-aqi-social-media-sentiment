@@ -375,6 +375,32 @@ select_city_posts_df <- select_city_posts %>%
   dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% 
   collect() 
 
+shenzhen <- select_city_posts_df %>% 
+  filter(NAME_2 == "Shenzhen")
+
+beijing <- select_city_posts_df %>% 
+  filter(NAME_2 == "Beijing")
+
+guangzhou <- select_city_posts_df %>% 
+  filter(NAME_2 == "Guangzhou")
+
+shanghai <- select_city_posts_df %>% 
+  filter(NAME_2 == "Shanghai")
+
+shenzhen_sentiment <- shenzhen %>% 
+  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
+
+write_rds(shenzhen_sentiment, "sentiment_analysis/shenzhen_sentiment.rds")
+
+shenzhen_sentiment %>% 
+  filter(!is.na(sentiment)) %>% 
+  mutate(created_date = as_date(created_at)) %>% 
+  group_by(created_date) %>% 
+  summarize(avg_sentiment = mean(sentiment)) %>% 
+  ggplot(aes(x = created_date, y = avg_sentiment)) +
+    geom_line()
+
+
 # n <- 20000
 # nr <- nrow(select_city_posts_df)
 # split_select_city_posts_df <- split(select_city_posts_df, rep(1:ceiling(nr/n), each=n, length.out=nr))
