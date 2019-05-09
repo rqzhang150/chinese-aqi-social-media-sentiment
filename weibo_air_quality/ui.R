@@ -278,20 +278,20 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 2),
         column(width = 8,
-               mapviewOutput("privincialDistribution")
+               mapviewOutput("privincialDistribution"),
+               tags$br()
         ),
         column(width = 2)
       ),
       
-      fluidRow(
-        column(width = 3),
-        column(width = 6,
-               tags$p("This is a map of the number of Weibo posts in different provinces through 2012. In this page, we will zoom into 4 cities - Beijing (北京), Shanghai (上海), Guangzhou (广州), and Shenzhen (深圳) - putting their reaction to air pollution, or smog, under scrutiny. Do they mention air pollution more explicitly? Do the average sentiment score of their Weibo posts decrease in days of heavy smog? In 2012, while the public perception on the harms of smog and air pollution is still budding, how do people express such concerns? Or do they? ")
-        ),
-        column(width = 3)
+      navlistPanel(
+        tabPanel("Beijing"),
+        tabPanel("Shanghai"),
+        tabPanel("Guangzhou",
+                 plotOutput("guangzhouAqiSentiment")),
+        tabPanel("Shenzhen"),
+        widths = c(3, 9)
       )
-      
-      
       
     ),
     

@@ -24,8 +24,13 @@ development_indicators <- read_rds("data/development_indicators.rds")
 provDist <- read_rds("data/year_total_geo.rds")
 keywords_freq_dist <- read_rds("data/keywords_freq_dist.rds")
 permission_denied_all <- read_rds("data/permission_denied_all.rds")
+guangzhou_plot <- read_rds("data/guangzhou_sentiment_aqi_plot.rds")
 
 shinyServer(function(input, output) {
+  
+  output$guangzhouAqiSentiment <- renderPlot(
+    guangzhou_plot
+  )
   
   observe({   
     if(input$shuffle > 0) {

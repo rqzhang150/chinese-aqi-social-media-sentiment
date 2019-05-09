@@ -53,8 +53,10 @@ conf$spark.driver.maxResultSize <- "3G"
 
 # Connect to local Spark instance.
 
-sc <- spark_connect(master = "local",
-                    config = conf)
+sc <- spark_connect(
+  master = "local",
+  config = conf
+)
 
 # GeoSpark registration.
 
@@ -75,33 +77,33 @@ tic("weiboscope_load_full")
 # dataframes that contains manageable metadata, and visualize it using ggplot.
 
 WEIBOSCOPE_ALL <- spark_read_csv(sc,
-                                 name = "weiboscope", 
-                                 
-                                 # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
-                                 # Using wildcard, we read in all the data in that directory. Because
-                                 # Weiboscope data already contains timestamp of the posts, we do not worry
-                                 # about the filename.
-                                 
-                                 path = "datasets/weiboscope_data/*.csv",
-                                 
-                                 # Specifying the column types manually without letting Spark infering the
-                                 # column types. The following column types are not specified under R coltypes,
-                                 # but instead uses Spark SQL format.
-                                 
-                                 infer_schema = FALSE,
-                                 columns = list(
-                                   mid = "character",
-                                   retweeted_status_mid = "character",
-                                   uid = "character",
-                                   retweeted_uid = "character",
-                                   source = "character",
-                                   image = "integer",
-                                   text = "character",
-                                   geo = "character",
-                                   created_at = "timestamp",
-                                   deleted_last_seen = "timestamp",
-                                   permission_denied = "boolean"
-                                 )
+  name = "weiboscope",
+
+  # Weiboscope data is stored under datasets/weiboscope_data in .csv formats.
+  # Using wildcard, we read in all the data in that directory. Because
+  # Weiboscope data already contains timestamp of the posts, we do not worry
+  # about the filename.
+
+  path = "datasets/weiboscope_data/*.csv",
+
+  # Specifying the column types manually without letting Spark infering the
+  # column types. The following column types are not specified under R coltypes,
+  # but instead uses Spark SQL format.
+
+  infer_schema = FALSE,
+  columns = list(
+    mid = "character",
+    retweeted_status_mid = "character",
+    uid = "character",
+    retweeted_uid = "character",
+    source = "character",
+    image = "integer",
+    text = "character",
+    geo = "character",
+    created_at = "timestamp",
+    deleted_last_seen = "timestamp",
+    permission_denied = "boolean"
+  )
 )
 toc()
 
@@ -125,23 +127,23 @@ WEIBOSCOPE_ALL <- spark_read_parquet(sc, name = "weiboscope", path = "spark_parq
 # posts are posted everyday in 2012.
 
 tic("creation_time_dist")
-creation_time_dist <- WEIBOSCOPE_ALL %>% 
-  
-  #Due to Spark SQL settings, we imported created_at variable as a timestamp.
-  #Because of Spark SQL grammar constraint, we cannot use as_date() in
-  #Lubridate. We instead use to_date function provided in Spark's HIVE
-  #functions. By using this, we obtain the date portion of created_at varibale.
-  
-  mutate(created_date = to_date(created_at)) %>% 
-  group_by(created_date) %>% 
-  
+creation_time_dist <- WEIBOSCOPE_ALL %>%
+
+  # Due to Spark SQL settings, we imported created_at variable as a timestamp.
+  # Because of Spark SQL grammar constraint, we cannot use as_date() in
+  # Lubridate. We instead use to_date function provided in Spark's HIVE
+  # functions. By using this, we obtain the date portion of created_at varibale.
+
+  mutate(created_date = to_date(created_at)) %>%
+  group_by(created_date) %>%
+
   # Calculate how many posts are created in each day.
-  
-  summarize(post_created = n()) %>% 
-  
+
+  summarize(post_created = n()) %>%
+
   # Function specific to Spark. Use collect() to calculate the result and put
   # the result into R workspace.
-  
+
   collect()
 toc()
 
@@ -158,7 +160,7 @@ write_rds(creation_time_dist, "weibo_air_quality/data/creation_time_dist.rds")
 # simple feature would take too much time. Therefore, we simplify the map while
 # preserving its topology using st_simplify.
 
-CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>% 
+CHN_simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_1_sf.rds") %>%
   st_simplify(preserveTopology = TRUE, dTolerance = 0.01)
 
 # We load the city level administrative map of China.
@@ -175,12 +177,14 @@ object.size(CHN_simplified)
 
 mapview(CHN_simplified)
 
-mapview(year_total_geo, zcol = "total_posts",
-        layer.name = "Number of Posts",
-        
-        # We view the map in an external browser.
-        
-        viewer.suppress = TRUE)
+mapview(year_total_geo,
+  zcol = "total_posts",
+  layer.name = "Number of Posts",
+
+  # We view the map in an external browser.
+
+  viewer.suppress = TRUE
+)
 
 
 
@@ -192,45 +196,49 @@ mapview(year_total_geo, zcol = "total_posts",
 # constraint. To achieve this, we use Geospark package to complete the
 # calculation directly in Spark.
 
-WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>% 
-  
+WEIBOSCOPE_GEO_WKT <- WEIBOSCOPE_ALL %>%
+
   # In the Weiboscope Data, because the longitude and latitude is coded as
   # string character, we need to extract them into separate variables in order
   # to manipulate the data. Spark does not support stringr functions, therefore,
   # we are using regex expressions (Java format, since Spark is based on Java)
   # to extract them.
-  
-  mutate(longitude = regexp_extract(geo, '[(](.*?)\\\\s'),
-         latitude = regexp_extract(geo, '\\\\s(.*?)[)]' )) %>% 
-  
+
+  mutate(
+    longitude = regexp_extract(geo, "[(](.*?)\\\\s"),
+    latitude = regexp_extract(geo, "\\\\s(.*?)[)]")
+  ) %>%
+
   # We filter out the geo data that is NA. And remove rows that contains
   # erroneous data. We also remove obviously unrealisitc points.
-  
-  filter(!is.na(geo),
-         
-         # There are some instances where the geo column contains information
-         # that is not geo information at all. We filter for the rows that
-         # confrom to the format.
-         
-         str_detect(geo, "POINT"),
-         
-         # This is obviously impossible
-         
-         geo != "POINT(0 0)",
-         
-         # There are some data points in the WeiboScope data that is outside of
-         # possible bounds, causing runtime errors in Spark. We filter out those
-         # data.
-         
-         between(longitude, 0, 180),
-         between(latitude, -90, 90)) %>% 
-  
+
+  filter(
+    !is.na(geo),
+
+    # There are some instances where the geo column contains information
+    # that is not geo information at all. We filter for the rows that
+    # confrom to the format.
+
+    str_detect(geo, "POINT"),
+
+    # This is obviously impossible
+
+    geo != "POINT(0 0)",
+
+    # There are some data points in the WeiboScope data that is outside of
+    # possible bounds, causing runtime errors in Spark. We filter out those
+    # data.
+
+    between(longitude, 0, 180),
+    between(latitude, -90, 90)
+  ) %>%
+
   # Within Spark, we use GeoSpark function st_geomfromwkt to transform character
   # string contained in geo to a Simple Feature object within Spark supported by
   # Geospark. We store the result of this transformation into variable
   # weibo_geo_wkt.
-  
-  mutate(weibo_geo_wkt = st_geomfromwkt(geo)) %>% 
+
+  mutate(weibo_geo_wkt = st_geomfromwkt(geo)) %>%
   filter(!is.na(weibo_geo_wkt))
 
 # Registering the table in the Spark workplace and give it a name.
@@ -265,11 +273,13 @@ spark_write_parquet(WEIBOSCOPE_GEO_WKT, "spark_parquets/weiboscope_geo_after_par
 
 WEIBOSCOPE_GEO_WKT <- spark_read_parquet(sc, name = "weiboscope_geo_wkt", path = "spark_parquets/weiboscope_geo_after_partition.parquet/")
 
-CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
-  mutate(chn_map_geom = st_as_text(geometry),
-         geometry = NULL)
+CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>%
+  mutate(
+    chn_map_geom = st_as_text(geometry),
+    geometry = NULL
+  )
 
-# CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>% 
+# CHN_GeoSpark_Map_df <- as_data_frame(CHN_simplified) %>%
 #   mutate(chn_map_geom = st_as_text(geometry),
 #          geometry = NULL)
 
@@ -297,13 +307,13 @@ CHN_GeoSpark_Map
 # for further data wrangling and analysis.
 
 geo_distribution <- st_join(CHN_GeoSpark_Map,
-                            WEIBOSCOPE_GEO_WKT,
-                            
-                            # We use an sql operation provided by GeoSpark here. By using
-                            # st_contains, we are joining the rows in which the Weibo
-                            # posts location is located within a Chinese province.
-                            
-                            join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+  WEIBOSCOPE_GEO_WKT,
+
+  # We use an sql operation provided by GeoSpark here. By using
+  # st_contains, we are joining the rows in which the Weibo
+  # posts location is located within a Chinese province.
+  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")
+)
 
 # Registering the Spark table with a name in the Spark workspace.
 
@@ -317,17 +327,18 @@ spark_write_parquet(geo_distribution, path = "spark_parquets/geo_distribution.pa
 # provinces across 2012.
 
 monthly_distribution <- st_join(CHN_GeoSpark_Map,
-                                WEIBOSCOPE_GEO_WKT,
-                                join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")) %>% 
-  mutate(created_month = month(to_date(created_at))) %>% 
+  WEIBOSCOPE_GEO_WKT,
+  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")
+) %>%
+  mutate(created_month = month(to_date(created_at))) %>%
   group_by(NAME_1, created_month) %>%
-  summarise(cnt = n()) %>% 
+  summarise(cnt = n()) %>%
   collect()
 
-year_total_geo <- monthly_distribution %>% 
-  group_by(NAME_1) %>% 
-  summarize(total_posts = sum(cnt)) %>% 
-  full_join(CHN_simplified) %>% 
+year_total_geo <- monthly_distribution %>%
+  group_by(NAME_1) %>%
+  summarize(total_posts = sum(cnt)) %>%
+  full_join(CHN_simplified) %>%
   st_as_sf()
 
 write_rds(year_total_geo, "weibo_air_quality/data/year_total_geo.rds")
@@ -336,26 +347,28 @@ year_total_geo <- read_rds("weibo_air_quality/data/year_total_geo.rds")
 
 # Select City Posts Filtering ---------------------------------------------
 
-CHN_Select_City_Simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds") %>% 
-  st_simplify(preserveTopology = TRUE, dTolerance = 0.01) %>% 
+CHN_Select_City_Simplified <- read_rds("datasets/gadm36_rds/gadm36_CHN_2_sf.rds") %>%
+  st_simplify(preserveTopology = TRUE, dTolerance = 0.01) %>%
   dplyr::filter(NAME_2 %in% c("Beijing", "Guangzhou", "Shenzhen", "Shanghai"))
 
-CHN_Select_City_Simplified <- as_data_frame(CHN_Select_City_Simplified) %>% 
-  mutate(chn_map_geom = st_as_text(geometry),
-         geometry = NULL)
+CHN_Select_City_Simplified <- as_data_frame(CHN_Select_City_Simplified) %>%
+  mutate(
+    chn_map_geom = st_as_text(geometry),
+    geometry = NULL
+  )
 
 CHN_Select_City_Simplified_spark <- copy_to(sc, CHN_Select_City_Simplified)
 
 CHN_Select_City_Simplified <- mutate(CHN_Select_City_Simplified_spark, chn_geo_wkt = st_geomfromwkt(chn_map_geom))
 
 select_city_posts <- st_join(CHN_Select_City_Simplified,
-                             WEIBOSCOPE_GEO_WKT,
-                            
-                             # We use an sql operation provided by GeoSpark here. By using
-                             # st_contains, we are joining the rows in which the Weibo
-                             # posts location is located within a Chinese province.
-                            
-                             join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)"))
+  WEIBOSCOPE_GEO_WKT,
+
+  # We use an sql operation provided by GeoSpark here. By using
+  # st_contains, we are joining the rows in which the Weibo
+  # posts location is located within a Chinese province.
+  join = sql("st_contains(chn_geo_wkt, weibo_geo_wkt)")
+)
 
 sdf_register(select_city_posts, name = "select_city_posts")
 
@@ -365,167 +378,8 @@ spark_write_parquet(select_city_posts, path = "spark_parquets/select_city_posts.
 
 select_city_posts <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/")
 
-select_city_posts_df <- select_city_posts %>% 
-  dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% 
-  collect() 
+select_city_posts_df <- select_city_posts %>%
+  dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>%
+  collect()
 
 write_rds(select_city_posts_df, "sentiment_analysis/select_city_posts_df.rds")
-
-# Some test code
-
-shenzhen <- select_city_posts_df %>% 
-  filter(NAME_2 == "Shenzhen")
-
-beijing <- select_city_posts_df %>% 
-  filter(NAME_2 == "Beijing")
-
-guangzhou <- select_city_posts_df %>% 
-  filter(NAME_2 == "Guangzhou")
-
-shanghai <- select_city_posts_df %>% 
-  filter(NAME_2 == "Shanghai")
-
-shenzhen_sentiment <- shenzhen %>% 
-  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
-
-write_rds(shenzhen_sentiment, "sentiment_analysis/shenzhen_sentiment.rds")
-
-shenzhen_sentiment %>% 
-  filter(!is.na(sentiment)) %>% 
-  mutate(created_date = as_date(created_at)) %>% 
-  group_by(created_date) %>% 
-  summarize(avg_sentiment = mean(sentiment)) %>% 
-  ggplot(aes(x = created_date, y = avg_sentiment)) +
-    geom_line()
-
-
-# n <- 20000
-# nr <- nrow(select_city_posts_df)
-# split_select_city_posts_df <- split(select_city_posts_df, rep(1:ceiling(nr/n), each=n, length.out=nr))
-
-select_city_sentiment <- select_city_posts_df %>% 
-  rowwise() %>% 
-  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
-
-
-# SADLY THIS ALSO WOULD NOT SPEED UP THE FUNCTION BECAUSE OF GOOGLE'S API USAGE QUOTA
-# # doParallel Setup
-# 
-# no_cores <- detectCores() - 1  
-# registerDoParallel(cores=no_cores)  
-# 
-# # Multidplyr Setup
-# 
-# cluster <- create_cluster(3)
-# set_default_cluster(cluster)
-# cluster_library(cluster, "tidyverse")
-# cluster_library(cluster, "lubridate")
-# cluster_library(cluster, "googleLanguageR")
-# 
-# 
-# evaluate_sentiment <- function(text, ...) {
-#   val <-  gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score
-#   return(val)
-# }
-# 
-# cluster_assign_value(cluster, 'evaluate_sentiment', evaluate_sentiment)
-# cluster_assign_value(cluster, 'gl_nlp', gl_nlp)
-# cluster_eval_(cluster, quote(gl_auth("weibo_air_quality/Transcription-675d1c2f9aef.json")))
-# 
-# sample %>% 
-#   mutate(sentiment = mapply(evaluate_sentiment, text))
-# 
-# select_city_sentiment <- select_city_posts_df %>% 
-#   partition(cluster = cluster) %>% 
-#   mutate(sentiment = mapply(evaluate_sentiment, text))
-
-
-
-# spark_write_csv(select_city_posts %>% dplyr::select(-chn_geo_wkt, -weibo_geo_wkt, -chn_map_geom) %>% sdf_coalesce(partitions = 1), path = "spark_parquets/select_city_posts_coalesced.csv")
-# 
-# sdf_schema(select_city_posts)
-
-### I have no RAM to do this, what a sad story.
-# select_city_posts_df <- spark_read_parquet(sc, "spark_parquets/select_city_posts.parquet/") %>% 
-#   collect()
-# 
-# write_rds(select_city_posts_df, "weibo_air_quality/data/select_city_posts.rds")
-
-# select_city_posts_csv <- read_csv("spark_parquets/select_city_posts_coalesced.csv/part-00000-88a13204-2bb0-4177-bdb6-2ea6af0b6c2f-c000.csv",
-#                                   col_types = cols(
-#                                     .default = col_character(),
-#                                     CC_2 = col_character(),
-#                                     HASC_2 = col_character(),
-#                                     retweeted_status_mid = col_character(),
-#                                     retweeted_uid = col_character(),
-#                                     image = col_logical(),
-#                                     created_at = col_datetime(format = ""),
-#                                     deleted_last_seen = col_datetime(format = ""),
-#                                     permission_denied = col_logical(),
-#                                     longitude = col_double(),
-#                                     latitude = col_double()
-#                                   )
-# )
-
-
-# shenzhen_posts <- select_city_posts %>% 
-#   mutate(created_date = to_date(created_at)) %>% 
-#   filter(length(text) >= 10) %>% 
-#   filter(NAME_2 == "Shenzhen") %>% 
-#   collect()
-
-with_sentiment <- sample_posts %>% 
-  mutate(sentiment = mapply(evaluate_sentiment, text))
-
-sample_posts_spark <- select_city_posts %>% 
-  mutate(created_date = to_date(created_at)) %>% 
-  filter(length(text) >= 10) %>% 
-  sdf_sample(fraction = 0.0001)
-
-# spark_apply(x = sample_posts_spark,
-#             f = function(e) do(e$text, evaluate_sentiment))
-
-
-
-
-with_sentiment <- sample_posts %>% 
-  rowwise() %>% 
-  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
-
-with_sentiment %>% 
-  select(text, sentiment) %>% 
-  View()
-
-# sample_return <- gl_nlp("[馋嘴]獨自旳宵夜 我在:http://t.cn/zWsKds0", nlp_type = "analyzeSentiment")
-# 
-# sample_return$documentSentiment$score
-# 
-# nested_samples <- sample_posts %>% 
-#   group_by(text) %>% 
-#   nest()
-# 
-# mapped_samples <- map(nested_samples$text, gl_nlp, nlp_type = "analyzeSentiment")
-# 
-# bind_rows(mapped_samples)
-# 
-# map(mapped_samples, `[`, "documentSentiment") %>% 
-#   bind_rows()
-# 
-split_samples <- sample_posts %>%
-  split(.$text) %>%
-  map(gl_nlp(text,
-             nlp_type = "analyzeSentiment"))
-# 
-# map(sample_posts, gl_nlp)
-# 
-# sample_posts %>% 
-#   slice(16) %>% 
-#   mutate(len = length(text))
-# 
-# gl_nlp("[馋嘴]獨自旳宵夜 我在:http://t.cn/zWsKds0",
-#        nlp_type = "analyzeSentiment")
-#   
-# mapview(CHN_Select_City_Simplified)
-
-
-  
