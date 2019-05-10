@@ -15,6 +15,7 @@ library(shinythemes)
 library(markdown)
 library(DT)
 library(gridExtra)
+library(cowplot)
 library(googleLanguageR)
 gl_auth("Transcription-675d1c2f9aef.json")
 
@@ -314,8 +315,8 @@ shinyUI(fluidPage(
       navlistPanel(
         "Select City",
         tabPanel("Beijing",
-                 tags$h3("Shanghai"),
-                 # plotOutput("shanghaiAqiSentiment"),
+                 tags$h3("Beijing"),
+                 # plotOutput("beijingAqiSentiment"),
                  tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
                  tags$p(class = "source-note", "Air Quality Data Source: U.S. Mission to China/United States Department of State.")
         ),

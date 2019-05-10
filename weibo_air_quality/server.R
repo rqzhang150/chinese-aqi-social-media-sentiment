@@ -16,6 +16,7 @@ library(markdown)
 library(tidyverse)
 library(DT)
 library(gridExtra)
+library(cowplot)
 library(googleLanguageR)
 gl_auth("Transcription-675d1c2f9aef.json")
 
@@ -140,7 +141,7 @@ shinyServer(function(input, output) {
       filter(between(year, input$urbanization_year[1], input$urbanization_year[2])) %>% 
       filter(series_name == c("Urban population (% of total)") ) %>% 
       mutate(value = as.numeric(value)) %>% 
-      ggplot(aes(x = year, y = value, color = series_name)) +
+      ggplot(aes(x = year, y = value)) +
       geom_line() +
       geom_point(size = 0.5) +
       theme_minimal() +

@@ -31,16 +31,13 @@ Collected information include user's hashed id (`uid`), the platform used to pub
 
 Additionally, as Weibo is required to conform with government's censorship requirements in sensitive issues. This dataset also tracks whether the post is deleted. Weibo displays posts that are censored in different ways: either saying that it's deleted (`deleted_last_seen`) or the user does not have permission to view the post (`permission_denied`).
 
-To access their dataset, please visit https://hub.hku.hk/cris/dataset/dataset107483.
+To access their dataset, please visit <https://hub.hku.hk/cris/dataset/dataset107483>.
 
-**Citation**
-
-King-wa Fu, CH Chan, and Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28
+Citation: King-wa Fu, CH Chan, and Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. <http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28>.
 
 ### U.S. Mission to China Air Quality Data
 
-**U.S. Mission to China Air Quality Historical Data**
-U.S. Department of State. 2019. U.S. Department of State Air Quality Monitoring Program. http://www.stateair.net/web/historical/1/1.html
+Citation: U.S. Department of State. 2019. U.S. Department of State Air Quality Monitoring Program. <http://www.stateair.net/web/historical/1/1.html>.
 
 ### NASA Socioeconomic Data and Applications Center (SEDAC)
 
@@ -48,22 +45,16 @@ NASA's Moderate Resolution Imaging Spectroradiometer (MODIS), Multi-angle Imagin
 
 This project utilizes Global Annual PM2.5 Grids from MODIS, MISR and SeaWiFS Aerosol Optical Depth (AOD) with GWR, v1 (1998–2016) derived from the previous observations. Ranging from 1998 to 2016, the data, provided in GeoTiff format, present a coherent outlook into the trend of air pollution in China.
 
-**Citation**
-
-van Donkelaar, A., R. V. Martin, M. Brauer, N. C. Hsu, R. A. Kahn, R. C. Levy, A. Lyapustin, A. M. Sayer, and D. M. Winker. 2016. Global Estimates of Fine Particulate Matter Using a Combined Geophysical-Statistical Method with Information from Satellites. Environmental Science & Technology 50 (7): 3762-3772. https://doi.org/10.1021/acs.est.5b05833.
+Citation: van Donkelaar, A., R. V. Martin, M. Brauer, N. C. Hsu, R. A. Kahn, R. C. Levy, A. Lyapustin, A. M. Sayer, and D. M. Winker. 2016. Global Estimates of Fine Particulate Matter Using a Combined Geophysical-Statistical Method with Information from Satellites. Environmental Science & Technology 50 (7): 3762-3772. <https://doi.org/10.1021/acs.est.5b05833>.
 
 ### Global Administrative Areas Dataset
 
 This project makes use of Global Administrative Areas (GADM) Dataset to assist in plotting out the boundaries between administrative entities and to categorize the longitude-latitude Weibo geo-location data into specific administrative areas. GADM dataset represents countries' actural control over territory. **The territory presented in the GADM dataset does not reflect the author's view on countries' sovereignty claims or territorial disputes.**
 
-**Citation**
-
-Global Administrative Areas (2018). GADM database of Global Administrative Areas, version 3.6. [online] URL: www.gadm.org.
+Citation: Global Administrative Areas (2018). GADM database of Global Administrative Areas, version 3.6. [online] URL: <https://www.gadm.org>.
 
 ### World Development Indicators, World Bank Group
 
 This project makes use of World Bank Group's World Development Indicator to explore China's economic growth and continued urbanization process.
 
-**Citation**
-
-World Bank Development Indicators by the World Bank Group. Data licensed under CC BY 4.0.
+Citation: World Bank Development Indicators by the World Bank Group. Data licensed under CC BY 4.0.
