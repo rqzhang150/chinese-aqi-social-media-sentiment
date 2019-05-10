@@ -383,3 +383,42 @@ select_city_posts_df <- select_city_posts %>%
   collect()
 
 write_rds(select_city_posts_df, "sentiment_analysis/select_city_posts_df.rds")
+
+# RDS: Censored Posts ------------------------------------------------------------------
+
+permission_denied_dist <- WEIBOSCOPE_ALL %>% 
+  filter(!is.na(permission_denied)) %>% 
+  mutate(created_date = to_date(created_at)) %>% 
+  group_by(created_date) %>% 
+  summarize(deleted_count = n()) %>% 
+  collect()
+
+write_rds(permission_denied_dist, "weibo_air_quality/data/permission_denied_dist.rds")
+
+permission_denied_all <- WEIBOSCOPE_ALL %>% 
+  filter(!is.na(permission_denied)) %>% 
+  collect()
+
+write_rds(permission_denied_all, "weibo_air_quality/data/permission_denied_all.rds")
+
+# RDS: Keyword Distribution ----------------------------------------------------------
+
+keywords <- c("环保", "环境保护", "空气质量", "雾霾", "PM2.5", "霾", "污染", "口罩")
+
+frequency <- tibble(filter_keyword = character(),
+                    created_date = date(),
+                    post_created = integer())
+
+for (keyword in keywords) {
+  WEIBOSCOPE_ALL %>% 
+    filter(str_detect(text, keyword)) %>% 
+    mutate(created_date = to_date(created_at),
+           filter_keyword = keyword) %>% 
+    group_by(filter_keyword, created_date) %>% 
+    summarize(post_created = n()) %>% 
+    collect() %>% 
+    bind_rows(frequency) -> frequency
+}
+
+write_rds(frequency, "weibo_air_quality/data/keywords_freq_dist.rds")
+

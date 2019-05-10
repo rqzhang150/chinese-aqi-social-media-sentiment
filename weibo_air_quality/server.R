@@ -15,6 +15,7 @@ library(shinythemes)
 library(markdown)
 library(tidyverse)
 library(DT)
+library(gridExtra)
 library(googleLanguageR)
 gl_auth("Transcription-675d1c2f9aef.json")
 
@@ -25,8 +26,14 @@ provDist <- read_rds("data/year_total_geo.rds")
 keywords_freq_dist <- read_rds("data/keywords_freq_dist.rds")
 permission_denied_all <- read_rds("data/permission_denied_all.rds")
 guangzhou_plot <- read_rds("data/guangzhou_sentiment_aqi_plot.rds")
+shanghai_plot <- read_rds("data/shanghai_sentiment_aqi_plot.rds")
+
 
 shinyServer(function(input, output) {
+  
+  output$shanghaiAqiSentiment <- renderPlot(
+    shanghai_plot
+  )
   
   output$guangzhouAqiSentiment <- renderPlot(
     guangzhou_plot
@@ -131,7 +138,7 @@ shinyServer(function(input, output) {
   output$urbanizationPlot <- renderPlot({
     development_indicators %>% 
       filter(between(year, input$urbanization_year[1], input$urbanization_year[2])) %>% 
-      filter(series_name %in% c("Urban population (% of total)") ) %>% 
+      filter(series_name == c("Urban population (% of total)") ) %>% 
       mutate(value = as.numeric(value)) %>% 
       ggplot(aes(x = year, y = value, color = series_name)) +
       geom_line() +

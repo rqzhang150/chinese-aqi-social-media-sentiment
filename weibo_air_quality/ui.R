@@ -14,6 +14,7 @@ library(lubridate)
 library(shinythemes)
 library(markdown)
 library(DT)
+library(gridExtra)
 library(googleLanguageR)
 gl_auth("Transcription-675d1c2f9aef.json")
 
@@ -180,7 +181,7 @@ shinyUI(fluidPage(
         column(width = 3),
         column(width = 6,
                tags$br(),
-               tags$p(tags$span("I",class = "firstcharacter"), "n this project, we return to 2012, and examine how online discussions in Weibo engages with environmental damages and air pollutions. Through geographical locator associated with Weibo posts and historical air quality data, we delve into how air quality in a city affects the sentiment expressed by its dwellers on social media. We would then cut into the issue of censorship, and examine the practice of cencorship's trend in this period."),
+               tags$p(tags$span("I",class = "firstcharacter"), "n this project, we return to 2012, and examine the general engagement with environmental issues, and whether the issue of air quality has gained salience in the national discourse in 2012, or was it an issue still unnoticed by the general population. Through geographical locator associated with Weibo posts and historical air quality data, we delve into how air quality in a city affects the sentiment expressed by its dwellers on social media. We would then cut into the issue of censorship, and examine the practice of cencorship's trend in this period."),
                tags$br()
                ),
         column(width = 3)
@@ -286,7 +287,7 @@ shinyUI(fluidPage(
         column(width = 3),
         column(width = 6,
                tags$h2("Bad Air, Bad Day?"),
-               tags$p(tags$span("T",class = "firstcharacter"), "his is a map of the number of Weibo posts in different provinces through 2012. In this page, we will zoom into 4 cities - Beijing (北京), Shanghai (上海), Guangzhou (广州), and Shenzhen (深圳) - putting their reaction to air pollution, or smog, under scrutiny. Do they mention air pollution more explicitly? Do the average sentiment score of their Weibo posts decrease in days of heavy smog? In 2012, while the public perception on the harms of smog and air pollution is still budding, how do people express such concerns? Or do they? ")
+               tags$p(tags$span("T",class = "firstcharacter"), "his is a map of the number of Weibo posts in different provinces through 2012. In this page, we will zoom into 4 cities - Beijing (北京), Shanghai (上海), Guangzhou (广州), and Shenzhen (深圳) - putting their reaction to air pollution, or smog, under scrutiny. In four cities with the largest amount of geotagged Weibo posts, do people mention air pollution more explicitly? Do the average sentiment score of their Weibo posts decrease in days of heavy smog?")
         ),
         column(width = 3)
       ),
@@ -294,18 +295,42 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 2),
         column(width = 8,
+               tags$h3("Geotagged Weibo Posts Mostly in Coastal Areas"),
                mapviewOutput("privincialDistribution"),
+               tags$p(class = "source-note", "Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
                tags$br()
         ),
         column(width = 2)
       ),
       
+      fluidRow(
+        column(width = 3),
+        column(width = 6,
+               tags$p("In the next section, we would zoom into Beijing, Shanghai, and Guangzhou. Using the air quality data from U.S. Mission to China in 2012, we plot out the fluctuation of Weibo sentiment through 2012, and the fluctuation of the density of PM2.5 through 2012.")
+        ),
+        column(width = 3)
+      ),
+      
       navlistPanel(
-        tabPanel("Beijing"),
-        tabPanel("Shanghai"),
+        "Select City",
+        tabPanel("Beijing",
+                 tags$h3("Shanghai"),
+                 # plotOutput("shanghaiAqiSentiment"),
+                 tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
+                 tags$p(class = "source-note", "Air Quality Data Source: U.S. Mission to China/United States Department of State.")
+        ),
+        tabPanel("Shanghai",
+                 tags$h3("Shanghai"),
+                 plotOutput("shanghaiAqiSentiment"),
+                 tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
+                 tags$p(class = "source-note", "Air Quality Data Source: U.S. Mission to China/United States Department of State.")
+        ),
         tabPanel("Guangzhou",
-                 plotOutput("guangzhouAqiSentiment")),
-        tabPanel("Shenzhen"),
+                 tags$h3("Guangzhou"),
+                 plotOutput("guangzhouAqiSentiment"),
+                 tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
+                 tags$p(class = "source-note", "Air Quality Data Source: U.S. Mission to China/United States Department of State.")
+                 ),
         widths = c(3, 9)
       )
       
@@ -319,7 +344,8 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 3),
         column(width = 6,
-               tags$h2('"Permission Denied"')
+               tags$h2('"Permission Denied"'),
+               tags$p(tags$span("T",class = "firstcharacter"), "here are a variety of issues that have gave rise to contentious online debate on the Chinese Internet during 2012. In this page, we set aside our analysis on environmental awareness and air quality, and look into the issues that were censored on Weibo back in 2012. In the following component, you would be able to sample from over eighty thousand censored post collected by Weiboscope team. The original posts would be displayed, along with a Google translated version of these posts.")
         ),
         column(width = 3)
       ),
@@ -351,6 +377,7 @@ shinyUI(fluidPage(
       fluidRow(
         column(width = 2),
         column(width = 8,
+               tags$p("In the aftermath of multiple public opinion incidents in China, the government began increasing their grip on content moderation on Chinese Internet. They began mandating social media platforms to register the real name and phone number of the users on their platforms, and started a series of movement targeting 'rumors' on the Internet. The following animation shows the trend of increasing amount censorship recorded in the Weiboscope dataset."),
                imageOutput("censorshipTimeDist"),
                tags$p(class = "source-note", "Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28")
         ),

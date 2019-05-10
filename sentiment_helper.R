@@ -39,6 +39,12 @@ guangzhou <- select_city_posts_df %>%
 shanghai <- select_city_posts_df %>%
   filter(NAME_2 == "Shanghai")
 
+shanghai_partition_1 <- shanghai %>% 
+  slice(1:60000)
+
+shanghai_partition_2 <- shanghai %>% 
+  slice(60001:128891)
+
 # Using Google Natural Language API, we evaluate the sentiment for the Weibo
 # posts for each city, and store them into RDS files.
 
@@ -47,10 +53,24 @@ shenzhen_sentiment <- shenzhen %>%
 
 write_rds(shenzhen_sentiment, "sentiment_analysis/shenzhen_sentiment.rds")
 
-shanghai_sentiment <- shanghai %>%
+shanghai_sentiment_1 <- shanghai_partition_1 %>%
   mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
 
+write_rds(shanghai_sentiment_1, "sentiment_analysis/shanghai_sentiment_part_1.rds")
+
+shanghai_sentiment_2 <- shanghai_partition_2 %>%
+  mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
+
+write_rds(shanghai_sentiment_2, "sentiment_analysis/shanghai_sentiment.rds")
+
+shanghai_sentiment_1 <- read_rds("sentiment_analysis/shanghai_sentiment_part_1.rds")
+
+shanghai_sentiment_2 <- read_rds("sentiment_analysis/shanghai_sentiment_2.rds")
+
+shanghai_sentiment <- bind_rows(shanghai_sentiment_1, shanghai_sentiment_2)
+
 write_rds(shanghai_sentiment, "sentiment_analysis/shanghai_sentiment.rds")
+
 
 guangzhou_sentiment <- guangzhou %>%
   mutate(sentiment = gl_nlp(text, nlp_type = "analyzeSentiment")$documentSentiment$score)
@@ -180,3 +200,13 @@ guangzhou_plot <- cowplot::plot_grid(
 )
 
 write_rds(guangzhou_plot, "weibo_air_quality/data/guangzhou_sentiment_aqi_plot.rds")
+
+shanghai_plot <- cowplot::plot_grid(
+  generate_aqi_plot(shanghai_aqi, city_name = "Shanghai"),
+  generate_sentiment_plot(shanghai_sentiment, city_name = "Shanghai"),
+  nrow = 2,
+  rel_heights = c(0.6, 0.4),
+  align = "v"
+)
+
+write_rds(shanghai_plot, "weibo_air_quality/data/shanghai_sentiment_aqi_plot.rds")
