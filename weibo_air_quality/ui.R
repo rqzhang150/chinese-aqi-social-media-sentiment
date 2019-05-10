@@ -371,9 +371,7 @@ shinyUI(fluidPage(
                column(width = 1)
         )
       ),
-      
-      
-      
+
       fluidRow(
         column(width = 2),
         column(width = 8,
