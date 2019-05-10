@@ -28,7 +28,7 @@ animate(censorship_dist_plot,
         width = 1000,
         height = 500)
 
-anim_save("weibo_air_quality/censorship_dist_plot.gif", animation = censorship_dist_plot,
+anim_save("weibo_air_quality/www/censorship_dist_plot.gif", animation = censorship_dist_plot,
           nframes = 365,
           fps = 30,
           duration = 10,
