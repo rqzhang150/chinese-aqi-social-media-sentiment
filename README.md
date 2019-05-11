@@ -2,7 +2,7 @@
 
 Click [here](https://ruoqi-zhang.shinyapps.io/weibo_air_quality/) for the web application demonstrating the result of this project.
 
-Air pollution and environmental protections are salient topics in China at least since 2013. This project examines the situation in 2012. Using Weiboscope data, we analyze the popularity of environment-related subjects, and explore whether air pollution issues have gained similar prominance as they do today.
+Air pollution and environmental protections are salient topics in China at least since 2013. This project examines the situation in 2012. Using Weiboscope data, we analyze the popularity of environment-related subjects, and explore whether air pollution issues have gained similar prominence as they do today.
 
 If you'd like to chat about the project, you can contact me at `ruoqizhang [at] college.harvard.edu`.
 
