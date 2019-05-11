@@ -13,6 +13,8 @@ p {
   margin: 1rem auto;
 }
 
+/* The first character drop-down effect */
+
 .firstcharacter {
   color: #903;
   float: left;
@@ -24,6 +26,8 @@ p {
   padding-left: 3px;
 }
 
+/* Formatting for source note under plots */
+
 .source-note {
     font-family: Knowledge, "Source Sans Pro", Arial, sans-serif;
     font-size: 0.8rem;
@@ -33,6 +37,8 @@ p {
     margin: 0 0; 
     max-width: unset;
 }
+
+/* Formatting for the pre-generated censorship animation. This aims to stretch it to the width of the container. */
 
 #censorshipTimeDist {
   width: 100% !important; 
@@ -45,6 +51,8 @@ p {
   margin-right: auto; 
   width: 100%;
 }
+
+/* Formatting for the pre-generated pm2.5 map. This aims to stretch it to the width of the container. */
 
 #pm25map {
   width: 100% !important; 

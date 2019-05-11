@@ -1,11 +1,7 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
+# Libraries ------------------------------------------------------------------
+# We load all the necessary packages for the Shiny application here. We also
+# authenticate the Google Language API's JSON key, which is included in the
+# uploaded package but not pushed to Github for obvious reason.
 
 library(mapview)
 library(shiny)
@@ -19,14 +15,8 @@ library(cowplot)
 library(googleLanguageR)
 gl_auth("Transcription-675d1c2f9aef.json")
 
-# Define UI for application that draws a histogram
 shinyUI(fluidPage(
-  # theme = shinytheme("paper"),
-  
-  
-  # https://live.staticflickr.com/7508/15769708856_3ecc0c9c43_k.jpg
-  # https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg
-  
+
   navbarPage(
     title = "Settling The Dust",
     tabPanel(
@@ -298,7 +288,8 @@ shinyUI(fluidPage(
         column(width = 8,
                tags$h3("Geotagged Weibo Posts Mostly in Coastal Areas"),
                mapviewOutput("privincialDistribution"),
-               tags$p(class = "source-note", "Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
+               tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
+               tags$p(class = "source-note", "Map Data Source: Global Administrative Areas (2018). GADM database of Global Administrative Areas, version 3.6. [online] URL: www.gadm.org. Map represents de facto territory. This map does not reflect author's view on countries' sovereignty claims or territorial disputes."),
                tags$br()
         ),
         column(width = 2)
@@ -316,7 +307,7 @@ shinyUI(fluidPage(
         "Select City",
         tabPanel("Beijing",
                  tags$h3("Beijing"),
-                 # plotOutput("beijingAqiSentiment"),
+                 plotOutput("beijingAqiSentiment"),
                  tags$p(class = "source-note", "Weibo Data Source: King-wa Fu, CH Chan, Michael Chau. Assessing Censorship on Microblogs in China: Discriminatory Keyword Analysis and Impact Evaluation of the 'Real Name Registration' Policy. IEEE Internet Computing. 2013; 17(3): 42-50. http://doi.ieeecomputersociety.org/10.1109/MIC.2013.28"),
                  tags$p(class = "source-note", "Air Quality Data Source: U.S. Mission to China/United States Department of State.")
         ),
@@ -388,6 +379,22 @@ shinyUI(fluidPage(
 
     tabPanel(
       title = "About",
+      tags$br(),
+      fluidPage(
+        column(width = 2),
+        column(width = 4,
+               tags$img(src = "https://avatars2.githubusercontent.com/u/43431842?s=460&v=4",
+                        width = "100%",
+                        height = "auto")
+        ),
+        column(width = 6,
+               includeMarkdown("www/about_me.md")
+        ),
+        column(width = 2)
+      ),
+      
+      tags$br(),
+      
       fluidPage(
         column(width = 3),
         column(width = 6,

@@ -1,6 +1,3 @@
-### Ruoqi Zhang
-
-I'm a first-year student at Harvard planning to concentrate in Mathematics & Philosophy. I enjoy data analytics using R/Python. I also [report](https://www.thecrimson.com/writer/1214694/Ruoqi__Zhang/) for The Harvard Crimson.
 
 If you'd like to reimplement this project, you can access my [Github repository here](https://github.com/rqzhang150/chinese-aqi-social-media-sentiment).
 
