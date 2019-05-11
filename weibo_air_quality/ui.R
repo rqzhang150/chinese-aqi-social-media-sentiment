@@ -379,22 +379,6 @@ shinyUI(fluidPage(
 
     tabPanel(
       title = "About",
-      tags$br(),
-      fluidPage(
-        column(width = 2),
-        column(width = 4,
-               tags$img(src = "https://avatars2.githubusercontent.com/u/43431842?s=460&v=4",
-                        width = "100%",
-                        height = "auto")
-        ),
-        column(width = 6,
-               includeMarkdown("www/about_me.md")
-        ),
-        column(width = 2)
-      ),
-      
-      tags$br(),
-      
       fluidPage(
         column(width = 3),
         column(width = 6,
