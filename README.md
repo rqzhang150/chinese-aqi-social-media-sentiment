@@ -1,11 +1,8 @@
 # Settling the Dust: Air Pollution & Public Opinion in China, 2012
 
-![Smog in Beijing, China](https://live.staticflickr.com/733/23424745665_d054b3ca6d_h.jpg)
-Smog in Beijing, China. By *Lei Han* on [Flickr](https://www.flickr.com/photos/sunsetnoir/23424745665/in/photostream/). Licensed under [CC BY-NC-ND 2.0](https://creativecommons.org/licenses/by-nc-nd/2.0/).
+Click [here](https://ruoqi-zhang.shinyapps.io/weibo_air_quality/) for the web application demonstrating the result of this project.
 
-## About
-
-Exploratory data analysis between Air Quality-related data and social media (Weibo) sentiment data in 2012. Final project for Harvard College GOV 1005: Data
+Air pollution and environmental protections are salient topics in China at least since 2013. This project examines the situation in 2012. Using Weiboscope data, we analyze the popularity of environment-related subjects, and explore whether air pollution issues have gained similar prominance as they do today.
 
 If you'd like to chat about the project, you can contact me at `ruoqizhang [at] college.harvard.edu`.
 
